@@ -1,8 +1,19 @@
 type Query {
-  userById(id: Int!): User!
+  userById(id: String!): User!
+  me: User!
+}
+
+type Mutation {
+  createUser(input: CreateUserInput!): User!
+}
+
+input CreateUserInput {
+  username: String!
+  email: String!
+  password: String!
 }
 
 type User {
-  id: Int!
+  id: String!
   username: String!
 }

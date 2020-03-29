@@ -1,0 +1,49 @@
+type Query {
+  matchById(id: String!): Match!
+  matchesFromUser(id: String!): [Match!]
+  myMatches: [Match!]
+}
+
+type Mutation {
+  createMatch(input: CreateMatchInput!): Match!
+  matchMove(input: MatchMoveInput!): Match!
+}
+
+input CreateMatchInput {
+  name: String
+}
+
+input MatchMoveInput {
+  id: String!
+  from: String!
+  to: String!
+}
+
+type Match {
+  id: String!
+  name: String!
+  participants: [MatchParticipant!]!
+  data: JSON!
+  fen: String!
+  moves: [MatchMove!]!
+  turn: String!
+}
+
+type MatchMove {
+  from: String!
+  to: String!
+  color: String!
+  piece: String!
+  captured: String!
+  date: String!
+}
+
+type MatchParticipant {
+  user: User!
+  side: color!
+}
+
+enum color {
+  WHITE
+  BLACK
+}
