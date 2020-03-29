@@ -44,6 +44,7 @@ export interface MatchMove {
     piece: string;
     captured: string;
     date: string;
+    fen: string;
 }
 
 export interface MatchParticipant {

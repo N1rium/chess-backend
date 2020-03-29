@@ -36,6 +36,7 @@ type MatchMove {
   piece: String!
   captured: String!
   date: String!
+  fen: String!
 }
 
 type MatchParticipant {

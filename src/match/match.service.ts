@@ -6,12 +6,12 @@ import {
 import { Match, CreateMatchInput, MatchMoveInput } from 'src/graphql';
 import { Chess } from 'chess.js/chess';
 
-const matches = [];
+const matches = {};
 
 @Injectable()
 export class MatchService {
   async matchById(id: string): Promise<Match> {
-    const result = matches.find(m => m.id === id);
+    const result = matches[id];
     if (!result) throw new NotFoundException();
     return result;
   }
@@ -28,7 +28,7 @@ export class MatchService {
       data: {},
       moves: [],
     };
-    matches.push(newMatch);
+    matches[newMatch.id] = newMatch;
     return newMatch;
   }
 
@@ -43,10 +43,14 @@ export class MatchService {
 
     const result = {
       ...storedMatch,
-      moves: [...storedMatch.moves, { ...move, date: Date.now() }],
+      moves: [
+        ...storedMatch.moves,
+        { ...move, date: Date.now(), fen: chess.fen() },
+      ],
       fen: chess.fen(),
       turn: chess.turn(),
     };
+    matches[result.id] = result;
     return result;
   }
 }
