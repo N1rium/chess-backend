@@ -3,10 +3,11 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { UserModule } from './user/user.module';
 import { MatchModule } from './match/match.module';
+import { ChatModule } from './chat/chat.module';
 import GraphQLModule from './graphql.module';
 
 @Module({
-  imports: [UserModule, GraphQLModule, MatchModule],
+  imports: [UserModule, GraphQLModule, MatchModule, ChatModule],
   controllers: [AppController],
   providers: [AppService],
 })

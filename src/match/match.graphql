@@ -9,6 +9,10 @@ type Mutation {
   matchMove(input: MatchMoveInput!): Match!
 }
 
+type Subscription {
+  matchMoveMade(id: String!): Match!
+}
+
 input CreateMatchInput {
   name: String
 }
@@ -17,16 +21,19 @@ input MatchMoveInput {
   id: String!
   from: String!
   to: String!
+  promotion: String
 }
 
 type Match {
   id: String!
   name: String!
   participants: [MatchParticipant!]!
-  data: JSON!
   fen: String!
   moves: [MatchMove!]!
   turn: String!
+  draw: Boolean!
+  gameOver: Boolean!
+  pgn: String!
 }
 
 type MatchMove {
@@ -37,6 +44,7 @@ type MatchMove {
   captured: String!
   date: String!
   fen: String!
+  san: String!
 }
 
 type MatchParticipant {
@@ -45,6 +53,6 @@ type MatchParticipant {
 }
 
 enum color {
-  WHITE
-  BLACK
+  w
+  b
 }

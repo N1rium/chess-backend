@@ -7,8 +7,13 @@
 /* tslint:disable */
 /* eslint-disable */
 export enum color {
-    WHITE = "WHITE",
-    BLACK = "BLACK"
+    w = "w",
+    b = "b"
+}
+
+export interface ChatMessageInput {
+    message: string;
+    room: string;
 }
 
 export interface CreateMatchInput {
@@ -25,16 +30,24 @@ export interface MatchMoveInput {
     id: string;
     from: string;
     to: string;
+    promotion?: string;
+}
+
+export interface ChatMessage {
+    sender: string;
+    content: string;
 }
 
 export interface Match {
     id: string;
     name: string;
     participants: MatchParticipant[];
-    data: JSON;
     fen: string;
     moves: MatchMove[];
     turn: string;
+    draw: boolean;
+    gameOver: boolean;
+    pgn: string;
 }
 
 export interface MatchMove {
@@ -45,6 +58,7 @@ export interface MatchMove {
     captured: string;
     date: string;
     fen: string;
+    san: string;
 }
 
 export interface MatchParticipant {
@@ -53,6 +67,7 @@ export interface MatchParticipant {
 }
 
 export interface IMutation {
+    sendChatMessage(input: ChatMessageInput): ChatMessage | Promise<ChatMessage>;
     createMatch(input: CreateMatchInput): Match | Promise<Match>;
     matchMove(input: MatchMoveInput): Match | Promise<Match>;
     createUser(input: CreateUserInput): User | Promise<User>;
@@ -64,6 +79,11 @@ export interface IQuery {
     myMatches(): Match[] | Promise<Match[]>;
     userById(id: string): User | Promise<User>;
     me(): User | Promise<User>;
+}
+
+export interface ISubscription {
+    chatMessage(room: string): ChatMessage | Promise<ChatMessage>;
+    matchMoveMade(id: string): Match | Promise<Match>;
 }
 
 export interface User {
