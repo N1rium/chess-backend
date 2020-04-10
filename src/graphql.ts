@@ -70,6 +70,7 @@ export interface MatchParticipant {
 export interface IMutation {
     sendChatMessage(input: ChatMessageInput): ChatMessage | Promise<ChatMessage>;
     createMatch(input: CreateMatchInput): Match | Promise<Match>;
+    joinMatch(id: string): Match | Promise<Match>;
     matchMove(input: MatchMoveInput): Match | Promise<Match>;
     createUser(input: CreateUserInput): User | Promise<User>;
 }

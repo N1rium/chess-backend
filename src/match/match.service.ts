@@ -59,9 +59,14 @@ export class MatchService {
       gameOver: chess.game_over(),
       pgn: chess.pgn(),
       captured: [],
-    };
+    } as Match;
     matches[newMatch.id] = newMatch;
     return newMatch;
+  }
+
+  async joinMatch(id: string): Promise<Match> {
+    const match = await this.matchById(id);
+    return match;
   }
 
   async matchMove(token: string, input: MatchMoveInput): Promise<Match> {

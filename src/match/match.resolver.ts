@@ -24,8 +24,13 @@ export class MatchResolver {
   }
 
   @Mutation('createMatch')
-  updateUser(@Args('input') input: CreateMatchInput): Promise<Match> {
+  createMatch(@Args('input') input: CreateMatchInput): Promise<Match> {
     return this.matchService.createMatch(input);
+  }
+
+  @Mutation('joinMatch')
+  joinMatch(@Args('id') id: string): Promise<Match> {
+    return this.matchService.joinMatch(id);
   }
 
   @Mutation('matchMove')
