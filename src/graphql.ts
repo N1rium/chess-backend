@@ -48,6 +48,7 @@ export interface Match {
     draw: boolean;
     gameOver: boolean;
     pgn: string;
+    captured?: string[];
 }
 
 export interface MatchMove {

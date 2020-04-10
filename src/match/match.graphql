@@ -34,6 +34,7 @@ type Match {
   draw: Boolean!
   gameOver: Boolean!
   pgn: String!
+  captured: [String!]
 }
 
 type MatchMove {

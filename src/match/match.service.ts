@@ -32,6 +32,7 @@ const matches = {
     draw: false,
     gameOver: false,
     pgn: '',
+    captured: [],
   },
 };
 
@@ -57,6 +58,7 @@ export class MatchService {
       draw: chess.in_draw(),
       gameOver: chess.game_over(),
       pgn: chess.pgn(),
+      captured: [],
     };
     matches[newMatch.id] = newMatch;
     return newMatch;
@@ -73,11 +75,16 @@ export class MatchService {
     // if (self.side !== storedMatch.turn)
     //   throw new BadRequestException({ message: 'Not your turn' });
 
-    const { pgn } = storedMatch;
+    const { pgn, captured = [] } = storedMatch;
     const chess = new Chess();
     pgn && chess.load_pgn(pgn);
     const move = chess.move({ from, to, promotion, verbose: true });
     if (!move) throw new BadRequestException({ message: 'Illegal move' });
+
+    let _captured = [...captured];
+    const { captured: moveCapture = null, color } = move;
+    if (moveCapture)
+      _captured = [..._captured, `${color === 'w' ? 'b' : 'w'}${moveCapture}`];
 
     const result = {
       ...storedMatch,
@@ -90,6 +97,7 @@ export class MatchService {
       pgn: chess.pgn(),
       draw: chess.in_draw(),
       gameOver: chess.game_over(),
+      captured: _captured,
     };
     matches[result.id] = result;
     return result;
