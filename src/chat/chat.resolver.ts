@@ -9,17 +9,17 @@ import {
 import { PubSub } from 'graphql-subscriptions';
 import { UseGuards } from '@nestjs/common';
 import { AuthGuard } from 'src/core/guards/auth';
-import { ChatMessageInput, ChatMessage } from 'src/graphql';
+import { ChatMessage, ChatMessageInput } from './chat.entity';
 
 const pubSub = new PubSub();
 
 @Resolver('Chat')
 export class ChatResolver {
-  @Mutation('sendChatMessage')
+  @Mutation(() => ChatMessage, { name: 'sendChatMessage' })
   @UseGuards(AuthGuard)
-  async matchMove(
+  async sendChatMessage(
     @Context() ctx,
-    @Args('input') input: ChatMessageInput,
+    @Args('input', { type: () => ChatMessageInput }) input: ChatMessageInput,
   ): Promise<ChatMessage> {
     pubSub.publish('chatMessage', {
       chatMessage: {
@@ -28,13 +28,14 @@ export class ChatResolver {
         room: input.room,
       },
     });
+    console.log(input);
     return { sender: ctx.token, content: input.message };
   }
 
-  @Subscription('chatMessage', {
+  @Subscription(() => ChatMessage, {
     filter: (payload, variables) => payload.chatMessage.room === variables.room,
   })
-  chatMessage() {
+  chatMessage(@Args('room') room: string) {
     return pubSub.asyncIterator('chatMessage');
   }
 }

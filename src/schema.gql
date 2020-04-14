@@ -1,0 +1,86 @@
+# ------------------------------------------------------
+# THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+# ------------------------------------------------------
+
+type ChatMessage {
+  sender: String!
+  content: String!
+}
+
+input ChatMessageInput {
+  message: String!
+  room: String!
+}
+
+input CreateUserInput {
+  username: String!
+  email: String!
+  password: String!
+  passwordRepeat: String!
+}
+
+input LoginInput {
+  email: String!
+  password: String!
+}
+
+type LoginResponse {
+  user: User!
+  token: String!
+}
+
+type Match {
+  id: ID!
+  turn: String!
+  fen: String!
+  pgn: String!
+  captured: [String!]!
+  gameOver: Boolean!
+  draw: Boolean!
+  checkmate: Boolean!
+  stalemate: Boolean!
+  threefold: Boolean!
+  moves: [MatchMove!]
+  participants: [User!]!
+}
+
+type MatchMove {
+  from: String!
+  to: String!
+  fen: String!
+  san: String!
+  date: String!
+}
+
+input MatchMoveInput {
+  id: String!
+  from: String!
+  to: String!
+  promotion: String!
+}
+
+type Mutation {
+  createUser(input: CreateUserInput!): LoginResponse!
+  createMatch: Match!
+  joinMatch(id: String!): Match!
+  matchMove(input: MatchMoveInput!): Match!
+  sendChatMessage(input: ChatMessageInput!): ChatMessage!
+}
+
+type Query {
+  userById(id: String!): User!
+  userByEmail(email: String!): User!
+  me: User!
+  login(input: LoginInput!): LoginResponse!
+  matchById(id: String!): Match!
+}
+
+type Subscription {
+  matchMoveMade(id: String!): MatchMove!
+  chatMessage(room: String!): ChatMessage!
+}
+
+type User {
+  id: ID!
+  username: String!
+}

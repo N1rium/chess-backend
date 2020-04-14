@@ -3,16 +3,14 @@ import GraphQLJSON from 'graphql-type-json';
 import { join } from 'path';
 
 export default GraphQLModule.forRoot({
-  typePaths: ['./**/*.graphql'],
+  // typePaths: ['./**/*.graphql'],
+  autoSchemaFile: 'src/schema.gql',
   installSubscriptionHandlers: true,
-  definitions: {
-    path: join(process.cwd(), 'src/graphql.ts'),
-  },
-  context: async ({ req, connection }: any) => {
+  context: async ({ req }: any) => {
     const ctx = {
       ...(req?.headers?.token && { token: req.headers.token }),
     };
     return ctx;
   },
-  resolvers: { JSON: GraphQLJSON },
+  // resolvers: { JSON: GraphQLJSON },
 });

@@ -7,10 +7,11 @@ import {
   Subscription,
 } from '@nestjs/graphql';
 import { MatchService } from './match.service';
-import { Match, CreateMatchInput, MatchMoveInput } from 'src/graphql';
+import { CreateMatchInput } from 'src/graphql';
 import { UseGuards } from '@nestjs/common';
 import { AuthGuard } from 'src/core/guards/auth';
 import { PubSub } from 'graphql-subscriptions';
+import { Match, MatchMove, MatchMoveInput } from './match.entity';
 
 const pubSub = new PubSub();
 
@@ -18,36 +19,37 @@ const pubSub = new PubSub();
 export class MatchResolver {
   constructor(private readonly matchService: MatchService) {}
 
-  @Query('matchById')
-  matchById(@Args('id') id: string): Promise<Match> {
+  @Query(() => Match, { name: 'matchById' })
+  matchById(@Args('id', { type: () => String }) id: string): Promise<Match> {
     return this.matchService.matchById(id);
   }
 
-  @Mutation('createMatch')
-  createMatch(@Args('input') input: CreateMatchInput): Promise<Match> {
-    return this.matchService.createMatch(input);
+  @Mutation(() => Match, { name: 'createMatch' })
+  @UseGuards(AuthGuard)
+  createMatch(): Promise<Match> {
+    return this.matchService.createMatch();
   }
 
-  @Mutation('joinMatch')
-  joinMatch(@Args('id') id: string): Promise<Match> {
+  @Mutation(() => Match, { name: 'joinMatch' })
+  joinMatch(@Args('id', { type: () => String }) id: string): Promise<Match> {
     return this.matchService.joinMatch(id);
   }
 
-  @Mutation('matchMove')
+  @Mutation(() => Match, { name: 'matchMove' })
   @UseGuards(AuthGuard)
   async matchMove(
     @Context() ctx,
-    @Args('input') input: MatchMoveInput,
+    @Args('input', { type: () => MatchMoveInput }) input: MatchMoveInput,
   ): Promise<Match> {
     const matchMoveMade = await this.matchService.matchMove(ctx.token, input);
     pubSub.publish('matchMoveMade', { matchMoveMade });
     return matchMoveMade;
   }
 
-  @Subscription('matchMoveMade', {
+  @Subscription(() => MatchMove, {
     filter: (payload, variables) => payload.matchMoveMade.id === variables.id,
   })
-  matchMoveMade() {
+  matchMoveMade(@Args('id') id: string) {
     return pubSub.asyncIterator('matchMoveMade');
   }
 }

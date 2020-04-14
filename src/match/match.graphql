@@ -27,7 +27,6 @@ input MatchMoveInput {
 
 type Match {
   id: String!
-  name: String!
   participants: [MatchParticipant!]!
   fen: String!
   moves: [MatchMove!]!
