@@ -3,7 +3,6 @@ import {
   NotFoundException,
   BadRequestException,
 } from '@nestjs/common';
-import { CreateMatchInput } from 'src/graphql';
 import { Match, MatchMove, MatchMoveInput } from './match.entity';
 import { Chess } from 'chess.js/chess';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -75,8 +74,6 @@ export class MatchService {
       match: storedMatch,
     };
 
-    console.log(newMove);
-
     const result = {
       ...storedMatch,
       fen: chess.fen(),
@@ -88,7 +85,6 @@ export class MatchService {
 
     const newMatch = await this.matchRepository.save(result);
     await this.matchMoveRepository.save(newMove);
-    console.log(newMatch);
     return newMatch;
   }
 }

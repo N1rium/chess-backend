@@ -28,7 +28,6 @@ export class ChatResolver {
         room: input.room,
       },
     });
-    console.log(input);
     return { sender: ctx.token, content: input.message };
   }
 

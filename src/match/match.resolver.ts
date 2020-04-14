@@ -7,7 +7,6 @@ import {
   Subscription,
 } from '@nestjs/graphql';
 import { MatchService } from './match.service';
-import { CreateMatchInput } from 'src/graphql';
 import { UseGuards } from '@nestjs/common';
 import { AuthGuard } from 'src/core/guards/auth';
 import { PubSub } from 'graphql-subscriptions';
