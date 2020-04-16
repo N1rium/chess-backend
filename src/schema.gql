@@ -41,7 +41,7 @@ type Match {
   stalemate: Boolean!
   threefold: Boolean!
   moves: [MatchMove!]
-  participants: [User!]!
+  participants: [MatchParticipant!]
 }
 
 type MatchMove {
@@ -50,6 +50,7 @@ type MatchMove {
   fen: String!
   san: String!
   date: String!
+  user: User!
 }
 
 input MatchMoveInput {
@@ -57,6 +58,11 @@ input MatchMoveInput {
   from: String!
   to: String!
   promotion: String!
+}
+
+type MatchParticipant {
+  user: User!
+  side: String!
 }
 
 type Mutation {
