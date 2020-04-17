@@ -4,9 +4,9 @@ import {
   PrimaryGeneratedColumn,
   ManyToOne,
   OneToMany,
-  ManyToMany,
-  JoinTable,
   CreateDateColumn,
+  PrimaryColumn,
+  JoinColumn,
 } from 'typeorm';
 import { ObjectType, Field, ID, InputType } from '@nestjs/graphql';
 
@@ -63,18 +63,18 @@ export class Match {
   )
   moves: MatchMove[];
 
-  @Field(() => [User])
-  @ManyToMany(type => User, { eager: true })
-  @JoinTable()
-  participants: User[];
+  @Field(() => [MatchParticipant], { nullable: true })
+  @OneToMany(
+    type => MatchParticipant,
+    participant => participant.match,
+    { eager: true },
+  )
+  participants: MatchParticipant[];
 }
 
 @ObjectType()
 @Entity()
 export class MatchMove {
-  @PrimaryGeneratedColumn('increment')
-  id: number;
-
   @Field(() => String)
   @Column({ type: 'varchar', length: 10 })
   from: string;
@@ -92,13 +92,32 @@ export class MatchMove {
   san: string;
 
   @Field(() => String)
-  @CreateDateColumn({ type: 'timestamp' })
+  @CreateDateColumn({ type: 'timestamp', primary: true })
   date: Date;
 
-  @ManyToOne(
-    type => Match,
-    match => match.moves,
-  )
+  @ManyToOne(type => Match)
+  match: Match;
+
+  @Field(() => User)
+  @ManyToOne(type => User, { eager: true })
+  user: User;
+}
+
+@ObjectType()
+@Entity()
+export class MatchParticipant {
+  @PrimaryGeneratedColumn('increment')
+  id: number;
+
+  @Field(() => User)
+  @ManyToOne(type => User, { eager: true })
+  user: User;
+
+  @Column({ type: 'varchar', length: 1 })
+  @Field(() => String)
+  side: string;
+
+  @ManyToOne(type => Match)
   match: Match;
 }
 

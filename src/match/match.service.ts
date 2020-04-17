@@ -2,11 +2,18 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
+  Inject,
 } from '@nestjs/common';
-import { Match, MatchMove, MatchMoveInput } from './match.entity';
+import {
+  Match,
+  MatchMove,
+  MatchMoveInput,
+  MatchParticipant,
+} from './match.entity';
 import { Chess } from 'chess.js/chess';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { User } from 'src/user/user.entity';
 
 @Injectable()
 export class MatchService {
@@ -15,15 +22,22 @@ export class MatchService {
     private matchRepository: Repository<Match>,
     @InjectRepository(MatchMove)
     private matchMoveRepository: Repository<MatchMove>,
+    @InjectRepository(MatchParticipant)
+    private participantRepository: Repository<MatchParticipant>,
   ) {}
 
   async matchById(id: string): Promise<Match> {
     return this.matchRepository.findOne(id);
   }
 
+  async availableMatches(): Promise<Match[]> {
+    const matches = await this.matchRepository.find({ take: 50 });
+    return matches.filter(m => m.participants.length <= 1);
+  }
+
   async createMatch(): Promise<Match> {
     const chess = new Chess();
-    const match = this.matchRepository.save({
+    const match = await this.matchRepository.save({
       fen: chess.fen(),
       turn: chess.turn(),
       draw: chess.in_draw(),
@@ -48,8 +62,13 @@ export class MatchService {
     const { id, from, to, promotion = 'q' } = input;
     const storedMatch = await this.matchById(id);
 
+    const { gameOver } = storedMatch;
+    if (gameOver) {
+      throw new BadRequestException({ message: 'Match has already ended' });
+    }
+
     // const { participants } = storedMatch;
-    // const self = participants.find(p => p.user.id === token);
+    // const self = participants.find(p => p.user.id == token);
     // if (!self)
     //   throw new BadRequestException({ message: 'You are not a participant' });
 
@@ -66,25 +85,33 @@ export class MatchService {
     if (moveCapture)
       storedMatch.captured.push(`${color === 'w' ? 'b' : 'w'}${moveCapture}`);
 
-    let newMove = new MatchMove();
-    newMove = {
-      ...move,
-      date: Date.now(),
-      fen: chess.fen(),
-      match: storedMatch,
-    };
+    storedMatch.fen = chess.fen();
+    storedMatch.turn = chess.turn();
+    storedMatch.pgn = chess.pgn();
+    storedMatch.draw = chess.in_draw();
+    storedMatch.gameOver = chess.game_over();
+    storedMatch.checkmate = chess.in_checkmate();
+    storedMatch.stalemate = chess.in_stalemate();
+    storedMatch.threefold = chess.in_threefold_repetition();
 
-    const result = {
+    const newMatch = await this.matchRepository.save({
       ...storedMatch,
+      moves: [
+        ...storedMatch.moves,
+        {
+          ...move,
+          user: { id: token },
+          fen: chess.fen(),
+          match: storedMatch.id,
+        },
+      ],
+    });
+    await this.matchMoveRepository.save({
+      ...move,
+      user: { id: token },
       fen: chess.fen(),
-      turn: chess.turn(),
-      pgn: chess.pgn(),
-      draw: chess.in_draw(),
-      gameOver: chess.game_over(),
-    };
-
-    const newMatch = await this.matchRepository.save(result);
-    await this.matchMoveRepository.save(newMove);
+      match: storedMatch.id,
+    });
     return newMatch;
   }
 }

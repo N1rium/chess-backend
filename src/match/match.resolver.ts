@@ -23,12 +23,19 @@ export class MatchResolver {
     return this.matchService.matchById(id);
   }
 
+  @UseGuards(AuthGuard)
+  @Query(() => [Match], { name: 'availableMatches' })
+  availableMatches(): Promise<Match[]> {
+    return this.matchService.availableMatches();
+  }
+
   @Mutation(() => Match, { name: 'createMatch' })
   @UseGuards(AuthGuard)
-  createMatch(): Promise<Match> {
+  createMatch(@Context() ctx): Promise<Match> {
     return this.matchService.createMatch();
   }
 
+  @UseGuards(AuthGuard)
   @Mutation(() => Match, { name: 'joinMatch' })
   joinMatch(@Args('id', { type: () => String }) id: string): Promise<Match> {
     return this.matchService.joinMatch(id);

@@ -79,6 +79,7 @@ type Query {
   me: User!
   login(input: LoginInput!): LoginResponse!
   matchById(id: String!): Match!
+  availableMatches: [Match!]!
 }
 
 type Subscription {
