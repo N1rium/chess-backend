@@ -12,7 +12,7 @@ import {
 } from './match.entity';
 import { Chess } from 'chess.js/chess';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, getManager } from 'typeorm';
 import { User } from 'src/user/user.entity';
 
 @Injectable()
@@ -35,21 +35,31 @@ export class MatchService {
     return matches.filter(m => m.participants.length <= 1);
   }
 
-  async createMatch(): Promise<Match> {
+  async createMatch(creator: string): Promise<Match> {
     const chess = new Chess();
-    const match = await this.matchRepository.save({
-      fen: chess.fen(),
-      turn: chess.turn(),
-      draw: chess.in_draw(),
-      gameOver: chess.game_over(),
-      pgn: chess.pgn(),
-      checkmate: chess.in_checkmate(),
-      stalemate: chess.in_stalemate(),
-      threefold: chess.in_threefold_repetition(),
-      participants: [],
-      captured: [],
+
+    const transaction = await getManager().transaction(async manager => {
+      const match = await this.matchRepository.save({
+        fen: chess.fen(),
+        turn: chess.turn(),
+        draw: chess.in_draw(),
+        gameOver: chess.game_over(),
+        pgn: chess.pgn(),
+        checkmate: chess.in_checkmate(),
+        stalemate: chess.in_stalemate(),
+        threefold: chess.in_threefold_repetition(),
+        captured: [],
+      });
+
+      await this.participantRepository.save({
+        match,
+        side: 'w',
+        user: { id: creator },
+      });
+      return match;
     });
-    return match;
+
+    return transaction;
   }
 
   async joinMatch(id: string): Promise<Match> {

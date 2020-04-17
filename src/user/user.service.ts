@@ -11,19 +11,15 @@ import {
   LoginResponse,
   CreateUserInput,
 } from './user.entity';
-import { JwtService } from '@nestjs/jwt';
+
+import * as jwt from 'jsonwebtoken';
 
 @Injectable()
 export class UserService {
   constructor(
     @InjectRepository(User)
     private usersRepository: Repository<User>,
-    private readonly jwtService: JwtService,
   ) {}
-
-  async me(token: string): Promise<User> {
-    return this.userById(token);
-  }
 
   async login(input: LoginInput): Promise<LoginResponse> {
     const { email, password } = input;
@@ -31,10 +27,13 @@ export class UserService {
     if (password !== user.password)
       throw new BadRequestException({ message: 'Wrong password' });
 
-    const token = this.jwtService.sign({
-      username: user.username,
-      id: user.id,
-    });
+    const token = jwt.sign(
+      {
+        username: user.username,
+        id: user.id,
+      },
+      'secret',
+    );
     return { user, token };
   }
 
@@ -60,10 +59,13 @@ export class UserService {
       password,
     });
 
-    const token = this.jwtService.sign({
-      username: user.username,
-      id: user.id,
-    });
+    const token = jwt.sign(
+      {
+        username: user.username,
+        id: user.id,
+      },
+      'secret',
+    );
 
     return { user, token };
   }

@@ -32,7 +32,7 @@ export class MatchResolver {
   @Mutation(() => Match, { name: 'createMatch' })
   @UseGuards(AuthGuard)
   createMatch(@Context() ctx): Promise<Match> {
-    return this.matchService.createMatch();
+    return this.matchService.createMatch(ctx.token);
   }
 
   @UseGuards(AuthGuard)

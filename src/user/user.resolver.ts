@@ -1,12 +1,14 @@
-import { Resolver, Query, Mutation, Args, Context } from '@nestjs/graphql';
+import { Resolver, Query, Mutation, Args } from '@nestjs/graphql';
 import { UserService } from './user.service';
-// import { CreateUserInput } from 'src/graphql';
 import {
   User,
   LoginInput,
   LoginResponse,
   CreateUserInput,
 } from './user.entity';
+import { CurrentUser } from 'src/core/decorators/current-user';
+import { UseGuards } from '@nestjs/common';
+import { AuthGuard } from 'src/core/guards/auth';
 
 @Resolver('User')
 export class UserResolver {
@@ -22,9 +24,10 @@ export class UserResolver {
     return this.userService.userByEmail(email);
   }
 
+  @UseGuards(AuthGuard)
   @Query(() => User, { name: 'me' })
-  me(@Context() ctx): Promise<User> {
-    return this.userService.me(ctx.token);
+  me(@CurrentUser() user): Promise<User> {
+    return this.userService.userById(user.id);
   }
 
   @Query(() => LoginResponse, { name: 'login' })
