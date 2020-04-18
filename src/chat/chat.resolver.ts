@@ -10,6 +10,7 @@ import { PubSub } from 'graphql-subscriptions';
 import { UseGuards } from '@nestjs/common';
 import { AuthGuard } from 'src/core/guards/auth';
 import { ChatMessage, ChatMessageInput } from './chat.entity';
+import { CurrentUser } from 'src/core/decorators/current-user';
 
 const pubSub = new PubSub();
 
@@ -18,17 +19,17 @@ export class ChatResolver {
   @Mutation(() => ChatMessage, { name: 'sendChatMessage' })
   @UseGuards(AuthGuard)
   async sendChatMessage(
-    @Context() ctx,
+    @CurrentUser() user,
     @Args('input', { type: () => ChatMessageInput }) input: ChatMessageInput,
   ): Promise<ChatMessage> {
     pubSub.publish('chatMessage', {
       chatMessage: {
-        sender: ctx.token,
+        sender: user.username,
         content: input.message,
         room: input.room,
       },
     });
-    return { sender: ctx.token, content: input.message };
+    return { sender: user.username, content: input.message };
   }
 
   @Subscription(() => ChatMessage, {
