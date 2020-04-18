@@ -5,8 +5,6 @@ import {
   ManyToOne,
   OneToMany,
   CreateDateColumn,
-  PrimaryColumn,
-  JoinColumn,
 } from 'typeorm';
 import { ObjectType, Field, ID, InputType } from '@nestjs/graphql';
 

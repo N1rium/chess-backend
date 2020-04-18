@@ -11,6 +11,7 @@ import { UseGuards } from '@nestjs/common';
 import { AuthGuard } from 'src/core/guards/auth';
 import { PubSub } from 'graphql-subscriptions';
 import { Match, MatchMove, MatchMoveInput } from './match.entity';
+import { CurrentUser } from 'src/core/decorators/current-user';
 
 const pubSub = new PubSub();
 
@@ -29,25 +30,34 @@ export class MatchResolver {
     return this.matchService.availableMatches();
   }
 
-  @Mutation(() => Match, { name: 'createMatch' })
   @UseGuards(AuthGuard)
-  createMatch(@Context() ctx): Promise<Match> {
-    return this.matchService.createMatch(ctx.token);
+  @Query(() => [Match], { name: 'myMatches' })
+  myMatches(@CurrentUser() user): Promise<Match[]> {
+    return this.matchService.myMatches(user.id);
+  }
+
+  @UseGuards(AuthGuard)
+  @Mutation(() => Match, { name: 'createMatch' })
+  createMatch(@CurrentUser() user): Promise<Match> {
+    return this.matchService.createMatch(user.id);
   }
 
   @UseGuards(AuthGuard)
   @Mutation(() => Match, { name: 'joinMatch' })
-  joinMatch(@Args('id', { type: () => String }) id: string): Promise<Match> {
-    return this.matchService.joinMatch(id);
+  joinMatch(
+    @Args('id', { type: () => String }) id: string,
+    @CurrentUser() user,
+  ): Promise<Match> {
+    return this.matchService.joinMatch(id, user.id);
   }
 
   @Mutation(() => Match, { name: 'matchMove' })
   @UseGuards(AuthGuard)
   async matchMove(
-    @Context() ctx,
+    @CurrentUser() user,
     @Args('input', { type: () => MatchMoveInput }) input: MatchMoveInput,
   ): Promise<Match> {
-    const matchMoveMade = await this.matchService.matchMove(ctx.token, input);
+    const matchMoveMade = await this.matchService.matchMove(user.id, input);
     pubSub.publish('matchMoveMade', { matchMoveMade });
     return matchMoveMade;
   }

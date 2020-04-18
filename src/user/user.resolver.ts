@@ -30,7 +30,7 @@ export class UserResolver {
     return this.userService.userById(user.id);
   }
 
-  @Query(() => LoginResponse, { name: 'login' })
+  @Mutation(() => LoginResponse, { name: 'login' })
   login(
     @Args('input', { type: () => LoginInput }) input: LoginInput,
   ): Promise<LoginResponse> {
