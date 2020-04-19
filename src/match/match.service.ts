@@ -1,30 +1,21 @@
-import {
-  Injectable,
-  NotFoundException,
-  BadRequestException,
-  Inject,
-} from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import {
   Match,
-  MatchMove,
   MatchMoveInput,
   MatchParticipant,
+  CreateMatchInput,
 } from './match.entity';
 import { Chess } from 'chess.js/chess';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, getManager, Connection } from 'typeorm';
-import { User } from 'src/user/user.entity';
+import { Repository, getManager } from 'typeorm';
 
 @Injectable()
 export class MatchService {
   constructor(
     @InjectRepository(Match)
     private matchRepository: Repository<Match>,
-    @InjectRepository(MatchMove)
-    private matchMoveRepository: Repository<MatchMove>,
     @InjectRepository(MatchParticipant)
     private participantRepository: Repository<MatchParticipant>,
-    private connection: Connection,
   ) {}
 
   async matchById(id: string): Promise<Match> {
@@ -32,7 +23,12 @@ export class MatchService {
   }
 
   async availableMatches(): Promise<Match[]> {
-    return this.matchRepository.find({ take: 50 });
+    return this.matchRepository.find({
+      order: {
+        createdDate: 'DESC',
+      },
+      take: 50,
+    });
   }
 
   async myMatches(id: string): Promise<Match[]> {
@@ -45,8 +41,21 @@ export class MatchService {
       .getMany();
   }
 
-  async createMatch(creator: string): Promise<Match> {
+  async createMatch(creator: string, input: CreateMatchInput): Promise<Match> {
     const chess = new Chess();
+
+    // Date format according to: https://sv.wikipedia.org/wiki/Portable_Game_Notation
+    chess.header(
+      'Date',
+      new Date()
+        .toISOString()
+        .split('T')[0]
+        .replace(/-/g, '.'),
+      'Site',
+      'https://chessports.com',
+      'Round',
+      '-',
+    );
 
     const transaction = await getManager().transaction(async manager => {
       const match = await this.matchRepository.save({
@@ -61,11 +70,25 @@ export class MatchService {
         captured: [],
       });
 
-      await this.participantRepository.save({
-        match,
-        side: 'w',
-        user: { id: creator },
-      });
+      const { side = 'w', opponent } = input;
+
+      const participants = [
+        {
+          match,
+          side,
+          user: { id: creator },
+        },
+      ];
+
+      if (opponent) {
+        participants.push({
+          match,
+          side: side === 'w' ? 'b' : 'w',
+          user: { id: opponent },
+        });
+      }
+
+      await this.participantRepository.save(participants);
       return match;
     });
 
@@ -75,7 +98,6 @@ export class MatchService {
   async joinMatch(id: string, userId: string): Promise<Match> {
     const match = await this.matchById(id);
     const { participants = [] } = match;
-    console.log(participants);
     if (participants.length >= 2)
       throw new BadRequestException({ message: 'Match is full' });
     if (participants.map(p => p.user.id).includes(userId))
@@ -114,10 +136,6 @@ export class MatchService {
     const move = chess.move({ from, to, promotion, verbose: true });
     if (!move) throw new BadRequestException({ message: 'Illegal move' });
 
-    const { captured: moveCapture = null, color } = move;
-    if (moveCapture)
-      storedMatch.captured.push(`${color === 'w' ? 'b' : 'w'}${moveCapture}`);
-
     storedMatch.fen = chess.fen();
     storedMatch.turn = chess.turn();
     storedMatch.pgn = chess.pgn();
@@ -127,24 +145,7 @@ export class MatchService {
     storedMatch.stalemate = chess.in_stalemate();
     storedMatch.threefold = chess.in_threefold_repetition();
 
-    const newMatch = await this.matchRepository.save({
-      ...storedMatch,
-      moves: [
-        ...storedMatch.moves,
-        {
-          ...move,
-          user: { id: userId },
-          fen: chess.fen(),
-          match: storedMatch.id,
-        },
-      ],
-    });
-    await this.matchMoveRepository.save({
-      ...move,
-      user: { id: userId },
-      fen: chess.fen(),
-      match: storedMatch.id,
-    });
+    const newMatch = await this.matchRepository.save(storedMatch);
     return newMatch;
   }
 }

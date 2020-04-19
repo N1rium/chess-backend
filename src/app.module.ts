@@ -8,7 +8,7 @@ import GraphQLModule from './graphql.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { User } from './user/user.entity';
-import { Match, MatchMove, MatchParticipant } from './match/match.entity';
+import { Match, MatchParticipant } from './match/match.entity';
 
 @Module({
   imports: [
@@ -23,7 +23,7 @@ import { Match, MatchMove, MatchParticipant } from './match/match.entity';
       username: 'ueeqgkgm',
       password: 'I2qb1XAZYaRW0OUnoHpUaNiwbb9VOKuN',
       database: 'ueeqgkgm',
-      entities: [User, Match, MatchMove, MatchParticipant],
+      entities: [User, Match, MatchParticipant],
       synchronize: true,
       autoLoadEntities: true,
     }),

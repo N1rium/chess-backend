@@ -5,6 +5,7 @@ import {
   ManyToOne,
   OneToMany,
   CreateDateColumn,
+  UpdateDateColumn,
 } from 'typeorm';
 import { ObjectType, Field, ID, InputType } from '@nestjs/graphql';
 
@@ -29,10 +30,6 @@ export class Match {
   @Column({ type: 'varchar' })
   pgn: string;
 
-  @Field(() => [String])
-  @Column({ type: 'varchar', array: true })
-  captured: string[];
-
   @Field(() => Boolean)
   @Column({ type: 'bool' })
   gameOver: boolean;
@@ -53,14 +50,6 @@ export class Match {
   @Column({ type: 'bool' })
   threefold: boolean;
 
-  @Field(() => [MatchMove], { nullable: true })
-  @OneToMany(
-    type => MatchMove,
-    move => move.match,
-    { eager: true },
-  )
-  moves: MatchMove[];
-
   @Field(() => [MatchParticipant], { nullable: true })
   @OneToMany(
     type => MatchParticipant,
@@ -68,37 +57,12 @@ export class Match {
     { eager: true },
   )
   participants: MatchParticipant[];
-}
 
-@ObjectType()
-@Entity()
-export class MatchMove {
-  @Field(() => String)
-  @Column({ type: 'varchar', length: 10 })
-  from: string;
+  @CreateDateColumn({ type: 'timestamp' })
+  createdDate: Date;
 
-  @Field(() => String)
-  @Column({ type: 'varchar', length: 10 })
-  to: string;
-
-  @Field(() => String)
-  @Column({ type: 'varchar' })
-  fen: string;
-
-  @Field(() => String)
-  @Column({ type: 'varchar', length: 10 })
-  san: string;
-
-  @Field(() => String)
-  @CreateDateColumn({ type: 'timestamp', primary: true })
-  date: Date;
-
-  @ManyToOne(type => Match)
-  match: Match;
-
-  @Field(() => User)
-  @ManyToOne(type => User, { eager: true })
-  user: User;
+  @UpdateDateColumn({ type: 'timestamp' })
+  updatedDate: Date;
 }
 
 @ObjectType()
@@ -132,4 +96,13 @@ export class MatchMoveInput {
 
   @Field(() => String)
   promotion: string;
+}
+
+@InputType()
+export class CreateMatchInput {
+  @Field(() => String, { nullable: true })
+  side: string;
+
+  @Field(() => String, { nullable: true })
+  opponent: string;
 }

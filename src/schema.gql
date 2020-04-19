@@ -12,6 +12,11 @@ input ChatMessageInput {
   room: String!
 }
 
+input CreateMatchInput {
+  side: String
+  opponent: String
+}
+
 input CreateUserInput {
   username: String!
   email: String!
@@ -34,23 +39,12 @@ type Match {
   turn: String!
   fen: String!
   pgn: String!
-  captured: [String!]!
   gameOver: Boolean!
   draw: Boolean!
   checkmate: Boolean!
   stalemate: Boolean!
   threefold: Boolean!
-  moves: [MatchMove!]
   participants: [MatchParticipant!]
-}
-
-type MatchMove {
-  from: String!
-  to: String!
-  fen: String!
-  san: String!
-  date: String!
-  user: User!
 }
 
 input MatchMoveInput {
@@ -68,7 +62,7 @@ type MatchParticipant {
 type Mutation {
   login(input: LoginInput!): LoginResponse!
   createUser(input: CreateUserInput!): LoginResponse!
-  createMatch: Match!
+  createMatch(input: CreateMatchInput!): Match!
   joinMatch(id: String!): Match!
   matchMove(input: MatchMoveInput!): Match!
   sendChatMessage(input: ChatMessageInput!): ChatMessage!
@@ -84,7 +78,7 @@ type Query {
 }
 
 type Subscription {
-  matchMoveMade(id: String!): MatchMove!
+  matchMoveMade(id: String!): Match!
   chatMessage(room: String!): ChatMessage!
 }
 

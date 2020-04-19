@@ -10,7 +10,7 @@ import { MatchService } from './match.service';
 import { UseGuards } from '@nestjs/common';
 import { AuthGuard } from 'src/core/guards/auth';
 import { PubSub } from 'graphql-subscriptions';
-import { Match, MatchMove, MatchMoveInput } from './match.entity';
+import { Match, MatchMoveInput, CreateMatchInput } from './match.entity';
 import { CurrentUser } from 'src/core/decorators/current-user';
 
 const pubSub = new PubSub();
@@ -38,8 +38,11 @@ export class MatchResolver {
 
   @UseGuards(AuthGuard)
   @Mutation(() => Match, { name: 'createMatch' })
-  createMatch(@CurrentUser() user): Promise<Match> {
-    return this.matchService.createMatch(user.id);
+  createMatch(
+    @CurrentUser() user,
+    @Args('input', { type: () => CreateMatchInput }) input: CreateMatchInput,
+  ): Promise<Match> {
+    return this.matchService.createMatch(user.id, input);
   }
 
   @UseGuards(AuthGuard)
@@ -62,7 +65,7 @@ export class MatchResolver {
     return matchMoveMade;
   }
 
-  @Subscription(() => MatchMove, {
+  @Subscription(() => Match, {
     filter: (payload, variables) => payload.matchMoveMade.id === variables.id,
   })
   matchMoveMade(@Args('id') id: string) {
