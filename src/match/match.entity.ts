@@ -75,6 +75,10 @@ export class MatchParticipant {
   @ManyToOne(type => User, { eager: true })
   user: User;
 
+  @Column({ type: 'boolean', default: false })
+  @Field(() => Boolean)
+  winner: boolean;
+
   @Column({ type: 'varchar', length: 1 })
   @Field(() => String)
   side: string;

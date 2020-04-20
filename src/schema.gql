@@ -56,6 +56,7 @@ input MatchMoveInput {
 
 type MatchParticipant {
   user: User!
+  winner: Boolean!
   side: String!
 }
 
