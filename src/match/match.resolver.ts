@@ -1,11 +1,4 @@
-import {
-  Resolver,
-  Query,
-  Mutation,
-  Args,
-  Context,
-  Subscription,
-} from '@nestjs/graphql';
+import { Resolver, Query, Mutation, Args, Subscription } from '@nestjs/graphql';
 import { MatchService } from './match.service';
 import { UseGuards } from '@nestjs/common';
 import { AuthGuard } from 'src/core/guards/auth';

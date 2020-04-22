@@ -3,6 +3,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { UserModule } from './user/user.module';
 import { MatchModule } from './match/match.module';
+import { MatchInviteModule } from './match-invite/match-invite.module';
 import { ChatModule } from './chat/chat.module';
 import GraphQLModule from './graphql.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -15,6 +16,7 @@ import { Match, MatchParticipant } from './match/match.entity';
     UserModule,
     GraphQLModule,
     MatchModule,
+    MatchInviteModule,
     ChatModule,
     TypeOrmModule.forRoot({
       type: 'postgres',
