@@ -57,6 +57,13 @@ export class MatchService {
       '-',
     );
 
+    const { side = 'w', opponent } = input;
+
+    if (creator == opponent)
+      throw new BadRequestException({
+        message: 'The same user cant take both sides',
+      });
+
     const transaction = await getManager().transaction(async manager => {
       const match = await this.matchRepository.save({
         fen: chess.fen(),
@@ -69,8 +76,6 @@ export class MatchService {
         threefold: chess.in_threefold_repetition(),
         captured: [],
       });
-
-      const { side = 'w', opponent } = input;
 
       const participants = [
         {
