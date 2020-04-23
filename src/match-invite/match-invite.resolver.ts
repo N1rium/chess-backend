@@ -24,17 +24,21 @@ export class MatchInviteResolver {
   }
 
   @Mutation(() => MatchInvite, { name: 'createMatchInvite' })
-  createMatchInvite(@CurrentUser() user): Promise<MatchInvite> {
-    const invite = this.matchInviteService.create(user);
+  async createMatchInvite(@CurrentUser() user): Promise<MatchInvite> {
+    const invite = await this.matchInviteService.create(user);
     pubSub.publish('matchInvite', {
       matchInvite: { invite },
     });
     return invite;
   }
 
-  @Mutation(() => MatchInvite, { name: 'deleteInvite' })
-  deleteInvite(@CurrentUser() user: User, @Args('id') id: string): void {
-    this.matchInviteService.delete(id, user.id);
+  @Mutation(() => MatchInvite, { name: 'deleteMyInvite' })
+  async deleteMyInvite(@CurrentUser() user: User): Promise<MatchInvite> {
+    const invite = await this.matchInviteService.deleteUserInvite(user);
+    pubSub.publish('matchInvite', {
+      matchInvite: { invite, deleted: true },
+    });
+    return invite;
   }
 
   @Subscription(() => MatchInviteSubData)

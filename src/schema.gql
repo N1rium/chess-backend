@@ -79,7 +79,7 @@ type Mutation {
   joinMatch(id: String!): Match!
   matchMove(input: MatchMoveInput!): Match!
   createMatchInvite: MatchInvite!
-  deleteInvite(id: String!): MatchInvite!
+  deleteMyInvite: MatchInvite!
   sendChatMessage(input: ChatMessageInput!): ChatMessage!
 }
 
