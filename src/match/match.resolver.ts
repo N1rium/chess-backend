@@ -30,6 +30,18 @@ export class MatchResolver {
   }
 
   @UseGuards(AuthGuard)
+  @Query(() => [Match], { name: 'myOngoingMatches' })
+  myOngoingMatches(@CurrentUser() user): Promise<Match[]> {
+    return this.matchService.userOngoingMatches(user.id);
+  }
+
+  @UseGuards(AuthGuard)
+  @Query(() => [Match], { name: 'myFinishedMatches' })
+  myFinishedMatches(@CurrentUser() user): Promise<Match[]> {
+    return this.matchService.userFinishedMatches(user.id);
+  }
+
+  @UseGuards(AuthGuard)
   @Mutation(() => Match, { name: 'createMatch' })
   createMatch(
     @CurrentUser() user,

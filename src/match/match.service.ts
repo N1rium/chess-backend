@@ -41,6 +41,28 @@ export class MatchService {
       .getMany();
   }
 
+  async userOngoingMatches(id: string): Promise<Match[]> {
+    return this.matchRepository
+      .createQueryBuilder('match')
+      .leftJoinAndSelect('match.participants', 'participants')
+      .leftJoinAndSelect('participants.user', 'user')
+      .where('user.id=:id')
+      .andWhere('match.gameOver=false')
+      .setParameter('id', id)
+      .getMany();
+  }
+
+  async userFinishedMatches(id: string): Promise<Match[]> {
+    return this.matchRepository
+      .createQueryBuilder('match')
+      .leftJoinAndSelect('match.participants', 'participants')
+      .leftJoinAndSelect('participants.user', 'user')
+      .where('user.id=:id')
+      .andWhere('match.gameOver=true')
+      .setParameter('id', id)
+      .getMany();
+  }
+
   async createMatch(creator: string, input: CreateMatchInput): Promise<Match> {
     const chess = new Chess();
 

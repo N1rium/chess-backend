@@ -90,6 +90,8 @@ type Query {
   matchById(id: String!): Match!
   availableMatches: [Match!]!
   myMatches: [Match!]!
+  myOngoingMatches: [Match!]!
+  myFinishedMatches: [Match!]!
   matchInviteFromId(id: String!): MatchInvite!
   matchInvites: [MatchInvite!]!
 }
