@@ -5,11 +5,13 @@ import { UserModule } from './user/user.module';
 import { MatchModule } from './match/match.module';
 import { MatchInviteModule } from './match-invite/match-invite.module';
 import { ChatModule } from './chat/chat.module';
-import GraphQLModule from './graphql.module';
+import { FriendModule } from './friend/friend.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import GraphQLModule from './graphql.module';
 
 import { User } from './user/user.entity';
 import { Match, MatchParticipant } from './match/match.entity';
+import { Friend } from './friend/friend.entity';
 
 @Module({
   imports: [
@@ -25,10 +27,11 @@ import { Match, MatchParticipant } from './match/match.entity';
       username: 'ueeqgkgm',
       password: 'I2qb1XAZYaRW0OUnoHpUaNiwbb9VOKuN',
       database: 'ueeqgkgm',
-      entities: [User, Match, MatchParticipant],
+      entities: [User, Match, MatchParticipant, Friend],
       synchronize: true,
       autoLoadEntities: true,
     }),
+    FriendModule,
   ],
   controllers: [AppController],
   providers: [AppService],

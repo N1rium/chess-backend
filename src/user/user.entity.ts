@@ -4,8 +4,11 @@ import {
   PrimaryGeneratedColumn,
   CreateDateColumn,
   UpdateDateColumn,
+  ManyToMany,
+  JoinTable,
 } from 'typeorm';
 import { ObjectType, Field, ID, InputType } from '@nestjs/graphql';
+import { Friend } from 'src/friend/friend.entity';
 
 export enum UserRole {
   ADMIN = 'admin',
@@ -36,6 +39,10 @@ export class User {
 
   @UpdateDateColumn({ type: 'timestamp' })
   updatedDate: Date;
+
+  @ManyToMany(type => Friend)
+  @JoinTable()
+  friends: Friend[];
 
   // @Column({
   //   type: 'enum',
