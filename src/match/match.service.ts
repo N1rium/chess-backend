@@ -67,16 +67,20 @@ export class MatchService {
     const chess = new Chess();
 
     // Date format according to: https://sv.wikipedia.org/wiki/Portable_Game_Notation
+    const date = new Date().toISOString().split('T');
     chess.header(
       'Date',
-      new Date()
-        .toISOString()
-        .split('T')[0]
-        .replace(/-/g, '.'),
+      date[0].replace(/-/g, '.'),
+      'Time',
+      date[1].split('.')[0],
+      'Mode',
+      'ICS',
       'Site',
       'https://chessports.com',
       'Round',
       '-',
+      'Annotator',
+      'Chessports',
     );
 
     const { side = 'w', opponent } = input;
