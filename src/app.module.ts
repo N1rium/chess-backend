@@ -12,6 +12,7 @@ import GraphQLModule from './graphql.module';
 import { User } from './user/user.entity';
 import { Match, MatchParticipant } from './match/match.entity';
 import { Friend } from './friend/friend.entity';
+import { MatchmakingModule } from './matchmaking/matchmaking.module';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { Friend } from './friend/friend.entity';
       autoLoadEntities: true,
     }),
     FriendModule,
+    MatchmakingModule,
   ],
   controllers: [AppController],
   providers: [AppService],

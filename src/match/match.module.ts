@@ -7,5 +7,6 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 @Module({
   imports: [TypeOrmModule.forFeature([Match, MatchParticipant])],
   providers: [MatchResolver, MatchService],
+  exports: [MatchService],
 })
 export class MatchModule {}
