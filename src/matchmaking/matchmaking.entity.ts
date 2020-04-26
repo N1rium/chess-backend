@@ -1,3 +1,5 @@
+import { ObjectType, Field } from '@nestjs/graphql';
+
 export class MatchmakingParticipant {
   id?: string;
   elo?: number;
@@ -8,4 +10,13 @@ export class MatchmakingParticipant {
 
 export enum MatchmakingSearchMode {
   ANY = 'any',
+}
+
+@ObjectType()
+export class MatchmakingResponse {
+  @Field(() => String)
+  matchId;
+
+  @Field(() => [String])
+  userIds;
 }

@@ -14,6 +14,8 @@ import { Match, MatchParticipant } from './match/match.entity';
 import { Friend } from './friend/friend.entity';
 import { MatchmakingModule } from './matchmaking/matchmaking.module';
 
+import { PubSub } from 'graphql-subscriptions';
+
 @Module({
   imports: [
     UserModule,

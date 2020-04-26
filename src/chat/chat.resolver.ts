@@ -1,28 +1,22 @@
-import {
-  Resolver,
-  Mutation,
-  Context,
-  Args,
-  Subscription,
-} from '@nestjs/graphql';
+import { Resolver, Mutation, Args, Subscription } from '@nestjs/graphql';
 
-import { PubSub } from 'graphql-subscriptions';
-import { UseGuards } from '@nestjs/common';
+import { PubSubEngine } from 'graphql-subscriptions';
+import { UseGuards, Inject } from '@nestjs/common';
 import { AuthGuard } from 'src/core/guards/auth';
 import { ChatMessage, ChatMessageInput } from './chat.entity';
 import { CurrentUser } from 'src/core/decorators/current-user';
 
-const pubSub = new PubSub();
-
 @Resolver('Chat')
 export class ChatResolver {
+  constructor(@Inject('PUB_SUB') private pubSub: PubSubEngine) {}
+
   @Mutation(() => ChatMessage, { name: 'sendChatMessage' })
   @UseGuards(AuthGuard)
   async sendChatMessage(
     @CurrentUser() user,
     @Args('input', { type: () => ChatMessageInput }) input: ChatMessageInput,
   ): Promise<ChatMessage> {
-    pubSub.publish('chatMessage', {
+    this.pubSub.publish('chatMessage', {
       chatMessage: {
         sender: user.username,
         content: input.message,
@@ -36,6 +30,6 @@ export class ChatResolver {
     filter: (payload, variables) => payload.chatMessage.room === variables.room,
   })
   chatMessage(@Args('room') room: string) {
-    return pubSub.asyncIterator('chatMessage');
+    return this.pubSub.asyncIterator('chatMessage');
   }
 }

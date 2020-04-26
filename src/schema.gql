@@ -59,6 +59,11 @@ type MatchInviteSubData {
   deleted: Boolean
 }
 
+type MatchmakingResponse {
+  matchId: String!
+  userIds: [String!]!
+}
+
 input MatchMoveInput {
   id: String!
   from: String!
@@ -81,6 +86,7 @@ type Mutation {
   createMatchInvite: MatchInvite!
   deleteMyInvite: MatchInvite!
   sendChatMessage(input: ChatMessageInput!): ChatMessage!
+  addToMatchmaking: String!
   removeFromMatchmaking: String!
 }
 
@@ -101,7 +107,7 @@ type Subscription {
   matchMoveMade(id: String!): Match!
   matchInvite: MatchInviteSubData!
   chatMessage(room: String!): ChatMessage!
-  matchmake(userId: String!): String!
+  matchmake(userId: String!): MatchmakingResponse!
 }
 
 type User {

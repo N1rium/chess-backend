@@ -1,15 +1,17 @@
 import { Resolver, Subscription, Args, Mutation } from '@nestjs/graphql';
 import { MatchmakingService } from './matchmaking.service';
-import { PubSub } from 'graphql-subscriptions';
+import { PubSubEngine } from 'graphql-subscriptions';
 import { AuthGuard } from 'src/core/guards/auth';
-import { UseGuards } from '@nestjs/common';
+import { UseGuards, Inject } from '@nestjs/common';
 import { CurrentUser } from 'src/core/decorators/current-user';
-
-const pubSub = new PubSub();
+import { MatchmakingResponse } from './matchmaking.entity';
 
 @Resolver('Matchmaking')
 export class MatchmakingResolver {
-  constructor(private readonly matchmakingService: MatchmakingService) {}
+  constructor(
+    private readonly matchmakingService: MatchmakingService,
+    @Inject('PUB_SUB') private pubSub: PubSubEngine,
+  ) {}
 
   // @UseGuards(AuthGuard)
   // @Mutation(() => String, { name: 'matchmake' })
@@ -18,16 +20,23 @@ export class MatchmakingResolver {
   // }
 
   @UseGuards(AuthGuard)
+  @Mutation(() => String, { name: 'addToMatchmaking' })
+  addToMatchmaking(@CurrentUser() user): Promise<string> {
+    return this.matchmakingService.addUserToQueue(user.id);
+  }
+
+  @UseGuards(AuthGuard)
   @Mutation(() => String, { name: 'removeFromMatchmaking' })
-  removeFromMatchmaking(@CurrentUser() user): string {
+  removeFromMatchmaking(@CurrentUser() user): Promise<string> {
     return this.matchmakingService.removeUserFromQueue(user.id);
   }
 
-  @Subscription(() => String, {
-    filter: (payload, variables) =>
-      variables.userIds.includes(payload.matchmake.userId),
+  @Subscription(() => MatchmakingResponse, {
+    filter: (payload, variables) => {
+      return payload.matchmake.userIds.includes(variables.userId);
+    },
   })
   matchmake(@Args('userId') userId: string) {
-    return pubSub.asyncIterator('matchmake');
+    return this.pubSub.asyncIterator('matchmake');
   }
 }

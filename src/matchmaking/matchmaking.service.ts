@@ -1,14 +1,18 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Inject } from '@nestjs/common';
 import {
   MatchmakingParticipant,
   MatchmakingSearchMode,
 } from './matchmaking.entity';
 import { MatchService } from 'src/match/match.service';
+import { PubSubEngine } from 'graphql-subscriptions';
 
 @Injectable()
 export class MatchmakingService {
   participants: { [key: string]: MatchmakingParticipant };
-  constructor(private readonly matchService: MatchService) {
+  constructor(
+    private readonly matchService: MatchService,
+    @Inject('PUB_SUB') private pubSub: PubSubEngine,
+  ) {
     this.participants = {};
   }
 
@@ -17,32 +21,38 @@ export class MatchmakingService {
   }
 
   async matchmake(userId: string): Promise<string> {
-    this.addUserToQueue(userId);
-    const search = async (): Promise<string> => {
-      console.log('search');
-      const player = this.getPlayer(MatchmakingSearchMode.ANY);
-      if (player && player.id !== userId) {
-        const match = await this.matchService.createMatch(player.id, {
-          side: 'w',
-          opponent: userId,
-        });
-        delete this.participants[userId];
-        delete this.participants[player.id];
-        return match.id;
-      }
-      setTimeout(() => search(), 1000);
-    };
-    return search();
+    const player = this.getPlayer(MatchmakingSearchMode.ANY);
+    if (player && player.id !== userId) {
+      const match = await this.matchService.createMatch(player.id, {
+        side: 'w',
+        opponent: userId,
+      });
+      this.removeUsersFromQueue([userId, player.id]);
+      this.pubSub.publish('matchmake', {
+        matchmake: {
+          userIds: [userId.toString(), player.id.toString()],
+          matchId: match.id,
+        },
+      });
+      return match.id;
+    }
+    return null;
   }
 
-  addUserToQueue(userId: string): string {
+  async addUserToQueue(userId: string): Promise<string> {
+    const mm = await this.matchmake(userId);
+    if (mm) return mm;
     const mp = new MatchmakingParticipant(userId);
     this.participants[userId] = mp;
-    console.log(this.participants);
     return userId;
   }
 
-  removeUserFromQueue(userId: string): string {
+  async removeUsersFromQueue(userIds: string[]): Promise<boolean> {
+    await userIds.forEach(id => this.removeUserFromQueue(id));
+    return true;
+  }
+
+  async removeUserFromQueue(userId: string): Promise<string> {
     delete this.participants[userId];
     console.log(this.participants);
     return userId;
