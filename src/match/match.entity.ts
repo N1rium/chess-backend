@@ -31,6 +31,10 @@ export class Match {
   pgn: string;
 
   @Field(() => Boolean)
+  @Column({ type: 'bool', default: 'false' })
+  ranked: boolean;
+
+  @Field(() => Boolean)
   @Column({ type: 'bool' })
   gameOver: boolean;
 

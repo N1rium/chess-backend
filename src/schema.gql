@@ -39,6 +39,7 @@ type Match {
   turn: String!
   fen: String!
   pgn: String!
+  ranked: Boolean!
   gameOver: Boolean!
   draw: Boolean!
   checkmate: Boolean!
