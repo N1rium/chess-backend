@@ -44,6 +44,22 @@ export class User {
   @JoinTable()
   friends: Friend[];
 
+  @Field(() => Number)
+  @Column({ type: 'integer', default: 1500 })
+  classicalElo: number;
+
+  @Field(() => Number)
+  @Column({ type: 'integer', default: 1500 })
+  rapidElo: number;
+
+  @Field(() => Number)
+  @Column({ type: 'integer', default: 1500 })
+  blitzElo: number;
+
+  @Field(() => Number)
+  @Column({ type: 'integer', default: 1500 })
+  bulletElo: number;
+
   // @Column({
   //   type: 'enum',
   //   enum: UserRole,

@@ -7,9 +7,28 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { ObjectType, Field, ID, InputType } from '@nestjs/graphql';
+import {
+  ObjectType,
+  Field,
+  ID,
+  InputType,
+  registerEnumType,
+} from '@nestjs/graphql';
 
 import { User } from 'src/user/user.entity';
+
+export enum MatchType {
+  CLASSICAL = 'CLASSICAL',
+  RAPID = 'RAPID',
+  BLITZ = 'BLITZ',
+  BULLET = 'BULLET',
+}
+
+registerEnumType(MatchType, {
+  name: 'MatchType',
+});
+
+/* ================================ Match ================================ */
 
 @ObjectType()
 @Entity()
@@ -17,6 +36,14 @@ export class Match {
   @Field(() => ID)
   @PrimaryGeneratedColumn('uuid')
   id: string;
+
+  @Field(() => MatchType)
+  @Column({ type: 'enum', enum: MatchType, default: MatchType.CLASSICAL })
+  type: MatchType;
+
+  @Field(() => Boolean)
+  @Column({ type: 'bool', default: 'false' })
+  realtime: boolean;
 
   @Field(() => String)
   @Column({ type: 'varchar', length: 1 })
@@ -32,7 +59,7 @@ export class Match {
 
   @Field(() => Boolean)
   @Column({ type: 'bool', default: 'false' })
-  ranked: boolean;
+  rated: boolean;
 
   @Field(() => Boolean)
   @Column({ type: 'bool' })
@@ -54,6 +81,12 @@ export class Match {
   @Column({ type: 'bool' })
   threefold: boolean;
 
+  @Column({ type: 'integer' })
+  timeControl: number;
+
+  @Column({ type: 'integer' })
+  increment: number;
+
   @Field(() => [MatchParticipant], { nullable: true })
   @OneToMany(
     type => MatchParticipant,
@@ -69,6 +102,8 @@ export class Match {
   updatedDate: Date;
 }
 
+/* ======================== Match Participant ================================ */
+
 @ObjectType()
 @Entity()
 export class MatchParticipant {
@@ -79,6 +114,10 @@ export class MatchParticipant {
   @ManyToOne(type => User, { eager: true })
   user: User;
 
+  @Field(() => Number)
+  @Column({ type: 'integer', default: 0 })
+  eloChange: number;
+
   @Column({ type: 'boolean', default: false })
   @Field(() => Boolean)
   winner: boolean;
@@ -87,9 +126,19 @@ export class MatchParticipant {
   @Field(() => String)
   side: string;
 
+  @Field(() => Number)
+  @Column({ type: 'bigint' })
+  pendingTimeoutDate: number;
+
+  @Field(() => Number)
+  @Column({ type: 'bigint' })
+  time: number;
+
   @ManyToOne(type => Match)
   match: Match;
 }
+
+/* ================================ Inputs ================================ */
 
 @InputType()
 export class MatchMoveInput {
@@ -113,4 +162,10 @@ export class CreateMatchInput {
 
   @Field(() => String, { nullable: true })
   opponent: string;
+
+  @Field(() => Number, { defaultValue: 20 })
+  timeControl: number;
+
+  @Field(() => Number, { defaultValue: 0 })
+  increment: number;
 }
