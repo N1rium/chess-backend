@@ -15,6 +15,8 @@ input ChatMessageInput {
 input CreateMatchInput {
   side: String
   opponent: String
+  timeControl: Float = 20
+  increment: Float = 0
 }
 
 input CreateUserInput {
@@ -36,10 +38,12 @@ type LoginResponse {
 
 type Match {
   id: ID!
+  type: MatchType!
+  realtime: Boolean!
   turn: String!
   fen: String!
   pgn: String!
-  ranked: Boolean!
+  rated: Boolean!
   gameOver: Boolean!
   draw: Boolean!
   checkmate: Boolean!
@@ -74,8 +78,18 @@ input MatchMoveInput {
 
 type MatchParticipant {
   user: User!
+  eloChange: Float!
   winner: Boolean!
   side: String!
+  pendingTimeoutDate: Float!
+  time: Float!
+}
+
+enum MatchType {
+  CLASSICAL
+  RAPID
+  BLITZ
+  BULLET
 }
 
 type Mutation {
@@ -114,4 +128,8 @@ type Subscription {
 type User {
   id: ID!
   username: String!
+  classicalElo: Float!
+  rapidElo: Float!
+  blitzElo: Float!
+  bulletElo: Float!
 }

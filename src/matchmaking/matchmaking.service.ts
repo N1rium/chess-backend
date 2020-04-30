@@ -26,6 +26,8 @@ export class MatchmakingService {
       const match = await this.matchService.createMatch(player.id, {
         side: 'w',
         opponent: userId,
+        timeControl: 20,
+        increment: 0,
       });
       this.removeUsersFromQueue([userId, player.id]);
       this.pubSub.publish('matchmake', {
