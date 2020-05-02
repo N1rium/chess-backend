@@ -8,6 +8,7 @@ import { ChatModule } from './chat/chat.module';
 import { FriendModule } from './friend/friend.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import GraphQLModule from './graphql.module';
+import { ScheduleModule } from '@nestjs/schedule';
 
 import { User } from './user/user.entity';
 import { Match, MatchParticipant } from './match/match.entity';
@@ -23,13 +24,16 @@ import { PubSub } from 'graphql-subscriptions';
     MatchModule,
     MatchInviteModule,
     ChatModule,
+    ScheduleModule.forRoot(),
     TypeOrmModule.forRoot({
       type: 'postgres',
-      host: 'rogue.db.elephantsql.com',
+      host: 'ec2-54-228-250-82.eu-west-1.compute.amazonaws.com',
       port: 5432,
-      username: 'ueeqgkgm',
-      password: 'I2qb1XAZYaRW0OUnoHpUaNiwbb9VOKuN',
-      database: 'ueeqgkgm',
+      username: 'gjorzqxkgxxjzo',
+      password:
+        '8c23b97ce3fe993cb827ca24934433d823e18d471acc8fefdf3810e4d99d4c31',
+      database: 'dctcaf773e0nqt',
+      extra: { ssl: { rejectUnauthorized: false } },
       entities: [User, Match, MatchParticipant, Friend],
       synchronize: true,
       autoLoadEntities: true,
