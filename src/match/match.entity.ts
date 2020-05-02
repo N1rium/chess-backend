@@ -81,6 +81,10 @@ export class Match {
   @Column({ type: 'bool' })
   threefold: boolean;
 
+  @Field(() => Boolean)
+  @Column({ type: 'bool', default: 'false' })
+  timedout: boolean;
+
   @Column({ type: 'integer' })
   timeControl: number;
 
@@ -159,6 +163,9 @@ export class MatchMoveInput {
 export class CreateMatchInput {
   @Field(() => String, { nullable: true })
   side: string;
+
+  @Field(() => Boolean, { defaultValue: false })
+  rated: boolean;
 
   @Field(() => String, { nullable: true })
   opponent: string;
