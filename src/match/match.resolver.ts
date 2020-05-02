@@ -2,10 +2,10 @@ import { Resolver, Query, Mutation, Args, Subscription } from '@nestjs/graphql';
 import { MatchService } from './match.service';
 import { UseGuards, Inject } from '@nestjs/common';
 import { AuthGuard } from 'src/core/guards/auth';
-import { PubSub, PubSubEngine } from 'graphql-subscriptions';
-import { Match, MatchMoveInput, CreateMatchInput } from './match.entity';
+import { PubSubEngine } from 'graphql-subscriptions';
 import { CurrentUser } from 'src/core/decorators/current-user';
-import { User } from 'src/user/user.entity';
+import { CreateMatchInput, MatchMoveInput } from './match.entity';
+import { Match } from './entity/match.entity';
 
 @Resolver('Match')
 export class MatchResolver {
@@ -45,7 +45,7 @@ export class MatchResolver {
   @UseGuards(AuthGuard)
   @Query(() => [Match], { name: 'myFinishedMatches' })
   myFinishedMatches(@CurrentUser() user): Promise<Match[]> {
-    return this.matchService.userFinishedMatches(user.id);
+    return this.matchService.userFinishedMatches(user.id, true);
   }
 
   @UseGuards(AuthGuard)

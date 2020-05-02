@@ -11,11 +11,12 @@ import GraphQLModule from './graphql.module';
 import { ScheduleModule } from '@nestjs/schedule';
 
 import { User } from './user/user.entity';
-import { Match, MatchParticipant } from './match/match.entity';
 import { Friend } from './friend/friend.entity';
 import { MatchmakingModule } from './matchmaking/matchmaking.module';
 
 import { PubSub } from 'graphql-subscriptions';
+import { MatchParticipant } from './match/entity/match-participant';
+import { Match } from './match/entity/match.entity';
 
 @Module({
   imports: [

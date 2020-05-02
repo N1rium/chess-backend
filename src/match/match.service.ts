@@ -1,11 +1,5 @@
 import { Injectable, BadRequestException, Inject } from '@nestjs/common';
-import {
-  Match,
-  MatchMoveInput,
-  MatchParticipant,
-  CreateMatchInput,
-  MatchType,
-} from './match.entity';
+import { MatchMoveInput, CreateMatchInput } from './match.entity';
 import { Chess } from 'chess.js/chess';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -13,6 +7,8 @@ import { Cron } from '@nestjs/schedule';
 import { PubSubEngine } from 'graphql-subscriptions';
 import { eloChange, getRatingFromTimeControl } from '../util/chess-helper';
 import { User } from 'src/user/user.entity';
+import { Match, MatchType } from './entity/match.entity';
+import { MatchParticipant } from './entity/match-participant';
 
 @Injectable()
 export class MatchService {
@@ -39,6 +35,17 @@ export class MatchService {
     });
   }
 
+  addSelfToMatches(id: string, matches: Match[]): Match[] {
+    return matches.map(m => this.addSelfToMatch(id, m));
+  }
+
+  addSelfToMatch(id: string, match: Match): Match {
+    const result = { ...match };
+    const { participants = [] } = result;
+    result.self = participants.find(p => p.user.id === id) || null;
+    return result;
+  }
+
   async myMatches(id: string): Promise<Match[]> {
     return this.matchRepository
       .createQueryBuilder('match')
@@ -60,8 +67,8 @@ export class MatchService {
       .getMany();
   }
 
-  async userFinishedMatches(id: string): Promise<Match[]> {
-    return this.matchRepository
+  async userFinishedMatches(id: string, self?: boolean): Promise<Match[]> {
+    let matches = await this.matchRepository
       .createQueryBuilder('match')
       .leftJoinAndSelect('match.participants', 'participants')
       .leftJoinAndSelect('participants.user', 'user')
@@ -69,6 +76,10 @@ export class MatchService {
       .andWhere('match.gameOver=true')
       .setParameter('id', id)
       .getMany();
+    if (self === true) {
+      matches = this.addSelfToMatches(id, matches);
+    }
+    return matches;
   }
 
   async createMatch(creator: string, input: CreateMatchInput): Promise<Match> {

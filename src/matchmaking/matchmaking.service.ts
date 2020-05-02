@@ -26,7 +26,7 @@ export class MatchmakingService {
       const match = await this.matchService.createMatch(player.id, {
         side: 'w',
         opponent: userId,
-        timeControl: 1,
+        timeControl: 5,
         increment: 0,
         rated: true,
       });
