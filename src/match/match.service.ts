@@ -4,13 +4,14 @@ import {
   MatchMoveInput,
   MatchParticipant,
   CreateMatchInput,
+  MatchType,
 } from './match.entity';
 import { Chess } from 'chess.js/chess';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Cron } from '@nestjs/schedule';
 import { PubSubEngine } from 'graphql-subscriptions';
-import { eloChange } from '../util/chess-helper';
+import { eloChange, getRatingFromTimeControl } from '../util/chess-helper';
 import { User } from 'src/user/user.entity';
 
 @Injectable()
@@ -75,6 +76,7 @@ export class MatchService {
     chess.header('Annotator', 'Chessports');
 
     const { side = 'w', opponent, timeControl, increment, rated } = input;
+    const type = MatchType[getRatingFromTimeControl(timeControl, increment)];
 
     if (creator == opponent)
       throw new BadRequestException({
@@ -94,6 +96,7 @@ export class MatchService {
       timeControl,
       increment,
       rated,
+      type,
     });
 
     const participants = [
@@ -154,7 +157,7 @@ export class MatchService {
     // if (self.side !== storedMatch.turn)
     //   throw new BadRequestException({ message: 'Not your turn' });
 
-    const { pgn, participants, rated } = storedMatch;
+    const { pgn, participants, rated, type } = storedMatch;
     const chess = new Chess();
     pgn && chess.load_pgn(pgn);
 
@@ -223,21 +226,33 @@ export class MatchService {
           ? 1
           : 0;
 
+      const getElo = (type: MatchType): string => {
+        const types = {
+          BLITZ: 'blitzElo',
+          RAPID: 'rapidElo',
+          BULLET: 'bulletElo',
+          CLASSICAL: 'classicalElo',
+        };
+        return types[type];
+      };
+
+      const eloType = getElo(type);
+
       const whiteEloChange = eloChange(
-        whiteUser.blitzElo,
-        blackUser.blitzElo,
+        whiteUser[eloType],
+        blackUser[eloType],
         whiteResult,
       );
       const blackEloChange = eloChange(
-        blackUser.blitzElo,
-        whiteUser.blitzElo,
+        blackUser[eloType],
+        whiteUser[eloType],
         blackResult,
       );
 
-      whitePlayer.eloChange = whiteEloChange - whiteUser.blitzElo;
-      whiteUser.blitzElo = whiteEloChange;
-      blackPlayer.eloChange = blackEloChange - blackUser.blitzElo;
-      blackUser.blitzElo = blackEloChange;
+      whitePlayer.eloChange = whiteEloChange - whiteUser[eloType];
+      whiteUser[eloType] = whiteEloChange;
+      blackPlayer.eloChange = blackEloChange - blackUser[eloType];
+      blackUser[eloType] = blackEloChange;
 
       await this.userRepository.save([whiteUser, blackUser]);
     }
