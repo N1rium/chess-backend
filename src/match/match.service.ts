@@ -106,7 +106,7 @@ export class MatchService {
       },
     ];
 
-    if (opponent) {
+    if (opponent != undefined && opponent != null) {
       participants.push({
         match,
         side: side === 'w' ? 'b' : 'w',
