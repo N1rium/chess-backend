@@ -13,12 +13,6 @@ export class MatchmakingResolver {
     @Inject('PUB_SUB') private pubSub: PubSubEngine,
   ) {}
 
-  // @UseGuards(AuthGuard)
-  // @Mutation(() => String, { name: 'matchmake' })
-  // matchmake(@CurrentUser() user): Promise<string> {
-  //   return this.matchmakingService.matchmake(user.id);
-  // }
-
   @UseGuards(AuthGuard)
   @Mutation(() => String, { name: 'addToMatchmaking' })
   addToMatchmaking(@CurrentUser() user): Promise<string> {
