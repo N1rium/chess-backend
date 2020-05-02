@@ -56,8 +56,8 @@ export class MatchService {
       .getMany();
   }
 
-  async userOngoingMatches(id: string): Promise<Match[]> {
-    return this.matchRepository
+  async userOngoingMatches(id: string, self?: boolean): Promise<Match[]> {
+    let matches = await this.matchRepository
       .createQueryBuilder('match')
       .leftJoinAndSelect('match.participants', 'participants')
       .leftJoinAndSelect('participants.user', 'user')
@@ -65,6 +65,10 @@ export class MatchService {
       .andWhere('match.gameOver=false')
       .setParameter('id', id)
       .getMany();
+    if (self === true) {
+      matches = this.addSelfToMatches(id, matches);
+    }
+    return matches;
   }
 
   async userFinishedMatches(id: string, self?: boolean): Promise<Match[]> {
