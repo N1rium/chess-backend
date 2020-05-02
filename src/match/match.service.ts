@@ -7,10 +7,10 @@ import {
 } from './match.entity';
 import { Chess } from 'chess.js/chess';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, getManager } from 'typeorm';
+import { Repository } from 'typeorm';
 import { Cron } from '@nestjs/schedule';
 import { PubSubEngine } from 'graphql-subscriptions';
-import { eloChange, updateELO } from '../util/chess-helper';
+import { eloChange } from '../util/chess-helper';
 import { User } from 'src/user/user.entity';
 
 @Injectable()
