@@ -1,20 +1,27 @@
 import { Resolver, Query, Mutation, Args, Subscription } from '@nestjs/graphql';
 import { MatchService } from './match.service';
-import { UseGuards } from '@nestjs/common';
+import { UseGuards, Inject } from '@nestjs/common';
 import { AuthGuard } from 'src/core/guards/auth';
-import { PubSub } from 'graphql-subscriptions';
+import { PubSub, PubSubEngine } from 'graphql-subscriptions';
 import { Match, MatchMoveInput, CreateMatchInput } from './match.entity';
 import { CurrentUser } from 'src/core/decorators/current-user';
-
-const pubSub = new PubSub();
+import { User } from 'src/user/user.entity';
 
 @Resolver('Match')
 export class MatchResolver {
-  constructor(private readonly matchService: MatchService) {}
+  constructor(
+    private readonly matchService: MatchService,
+    @Inject('PUB_SUB') private pubSub: PubSubEngine,
+  ) {}
 
   @Query(() => Match, { name: 'matchById' })
   matchById(@Args('id', { type: () => String }) id: string): Promise<Match> {
     return this.matchService.matchById(id);
+  }
+
+  @Query(() => Boolean, { name: 'cleanup' })
+  cleanup(): Promise<boolean> {
+    return this.matchService.cleanup();
   }
 
   @UseGuards(AuthGuard)
@@ -66,7 +73,7 @@ export class MatchResolver {
     @Args('input', { type: () => MatchMoveInput }) input: MatchMoveInput,
   ): Promise<Match> {
     const matchMoveMade = await this.matchService.matchMove(user.id, input);
-    pubSub.publish('matchMoveMade', { matchMoveMade });
+    // pubSub.publish('matchMoveMade', { matchMoveMade });
     return matchMoveMade;
   }
 
@@ -74,6 +81,6 @@ export class MatchResolver {
     filter: (payload, variables) => payload.matchMoveMade.id === variables.id,
   })
   matchMoveMade(@Args('id') id: string) {
-    return pubSub.asyncIterator('matchMoveMade');
+    return this.pubSub.asyncIterator('matchMoveMade');
   }
 }

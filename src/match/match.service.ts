@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException, Inject } from '@nestjs/common';
 import {
   Match,
   MatchMoveInput,
@@ -8,6 +8,10 @@ import {
 import { Chess } from 'chess.js/chess';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, getManager } from 'typeorm';
+import { Cron } from '@nestjs/schedule';
+import { PubSubEngine } from 'graphql-subscriptions';
+import { eloChange, updateELO } from '../util/chess-helper';
+import { User } from 'src/user/user.entity';
 
 @Injectable()
 export class MatchService {
@@ -16,6 +20,9 @@ export class MatchService {
     private matchRepository: Repository<Match>,
     @InjectRepository(MatchParticipant)
     private participantRepository: Repository<MatchParticipant>,
+    @InjectRepository(User)
+    private userRepository: Repository<User>,
+    @Inject('PUB_SUB') private pubSub: PubSubEngine,
   ) {}
 
   async matchById(id: string): Promise<Match> {
@@ -65,72 +72,53 @@ export class MatchService {
 
   async createMatch(creator: string, input: CreateMatchInput): Promise<Match> {
     const chess = new Chess();
+    chess.header('Annotator', 'Chessports');
 
-    // Date format according to: https://sv.wikipedia.org/wiki/Portable_Game_Notation
-    const date = new Date().toISOString().split('T');
-    chess.header(
-      'Date',
-      date[0].replace(/-/g, '.'),
-      'Time',
-      date[1].split('.')[0],
-      'Mode',
-      'ICS',
-      'Site',
-      'https://chessports.com',
-      'Round',
-      '-',
-      'Annotator',
-      'Chessports',
-    );
-
-    const { side = 'w', opponent, timeControl, increment } = input;
+    const { side = 'w', opponent, timeControl, increment, rated } = input;
 
     if (creator == opponent)
       throw new BadRequestException({
         message: 'The same user cant take both sides',
       });
 
-    const transaction = await getManager().transaction(async manager => {
-      const match = await this.matchRepository.save({
-        fen: chess.fen(),
-        turn: chess.turn(),
-        draw: chess.in_draw(),
-        gameOver: chess.game_over(),
-        pgn: chess.pgn(),
-        checkmate: chess.in_checkmate(),
-        stalemate: chess.in_stalemate(),
-        threefold: chess.in_threefold_repetition(),
-        captured: [],
-        timeControl,
-        increment,
-      });
-
-      const participants = [
-        {
-          match,
-          side,
-          user: { id: creator },
-          pendingTimeoutDate: Date.now() + timeControl * 1000 * 60,
-          time: timeControl * 1000 * 60,
-        },
-      ];
-
-      if (opponent) {
-        participants.push({
-          match,
-          side: side === 'w' ? 'b' : 'w',
-          user: { id: opponent },
-          pendingTimeoutDate: Date.now() + timeControl * 1000 * 60,
-          time: timeControl * 1000 * 60,
-        });
-      }
-
-      await this.participantRepository.save(participants);
-
-      return match;
+    const match = await this.matchRepository.save({
+      fen: chess.fen(),
+      turn: chess.turn(),
+      draw: chess.in_draw(),
+      gameOver: chess.game_over(),
+      pgn: chess.pgn(),
+      checkmate: chess.in_checkmate(),
+      stalemate: chess.in_stalemate(),
+      threefold: chess.in_threefold_repetition(),
+      captured: [],
+      timeControl,
+      increment,
+      rated,
     });
 
-    return transaction;
+    const participants = [
+      {
+        match,
+        side,
+        user: { id: creator },
+        pendingTimeoutDate: Date.now() + timeControl * 1000 * 60,
+        time: timeControl * 1000 * 60,
+      },
+    ];
+
+    if (opponent) {
+      participants.push({
+        match,
+        side: side === 'w' ? 'b' : 'w',
+        user: { id: opponent },
+        pendingTimeoutDate: Date.now() + timeControl * 1000 * 60,
+        time: timeControl * 1000 * 60,
+      });
+    }
+
+    await this.participantRepository.save(participants);
+
+    return match;
   }
 
   async joinMatch(id: string, userId: string): Promise<Match> {
@@ -166,7 +154,7 @@ export class MatchService {
     // if (self.side !== storedMatch.turn)
     //   throw new BadRequestException({ message: 'Not your turn' });
 
-    const { pgn, participants } = storedMatch;
+    const { pgn, participants, rated } = storedMatch;
     const chess = new Chess();
     pgn && chess.load_pgn(pgn);
 
@@ -177,8 +165,8 @@ export class MatchService {
     let pendingGameOver = false;
     if (pendingTimeoutDate < Date.now()) {
       pendingGameOver = true;
-      if (self.side === chess.turn()) self.winner = true;
-      else opponent.winner = true;
+      if (self.side === chess.turn()) opponent.winner = true;
+      else self.winner = true;
     }
 
     if (!pendingGameOver) {
@@ -207,9 +195,78 @@ export class MatchService {
     storedMatch.stalemate = chess.in_stalemate();
     storedMatch.threefold = chess.in_threefold_repetition();
 
-    await this.participantRepository.save([self, opponent]);
+    this.pubSub.publish('matchMoveMade', { matchMoveMade: storedMatch });
 
     const newMatch = await this.matchRepository.save(storedMatch);
+    if (newMatch.gameOver && rated) {
+      const whitePlayer = self.side === 'w' ? self : opponent;
+      const blackPlayer = self.side === 'b' ? self : opponent;
+      const users = await this.userRepository
+        .createQueryBuilder('user')
+        .where('user.id=:id', { id: whitePlayer.user.id })
+        .orWhere('user.id=:otherId', { otherId: blackPlayer.user.id })
+        .getMany();
+
+      const whiteUser = users.find(u => u.id === whitePlayer.user.id);
+      const blackUser = users.find(u => u.id === blackPlayer.user.id);
+
+      const whiteResult =
+        !whitePlayer.winner && !blackPlayer.winner
+          ? 0.5
+          : whitePlayer.winner
+          ? 1
+          : 0;
+      const blackResult =
+        !whitePlayer.winner && !blackPlayer.winner
+          ? 0.5
+          : blackPlayer.winner
+          ? 1
+          : 0;
+
+      const whiteEloChange = eloChange(
+        whiteUser.blitzElo,
+        blackUser.blitzElo,
+        whiteResult,
+      );
+      const blackEloChange = eloChange(
+        blackUser.blitzElo,
+        whiteUser.blitzElo,
+        blackResult,
+      );
+
+      whitePlayer.eloChange = whiteEloChange - whiteUser.blitzElo;
+      whiteUser.blitzElo = whiteEloChange;
+      blackPlayer.eloChange = blackEloChange - blackUser.blitzElo;
+      blackUser.blitzElo = blackEloChange;
+
+      await this.userRepository.save([whiteUser, blackUser]);
+    }
+
+    await this.participantRepository.save([self, opponent]);
     return newMatch;
+  }
+
+  // @Cron('45 * * * * *')
+  async cleanup(): Promise<boolean> {
+    const matches = await this.matchRepository
+      .createQueryBuilder('match')
+      .distinctOn(['match.id'])
+      .leftJoinAndSelect('match.participants', 'participant')
+      .where('match.gameOver=false')
+      .andWhere(`participant.pendingTimeoutDate < ${Date.now()}`)
+      .getMany();
+
+    matches.forEach(async match => {
+      match.gameOver = true;
+      match.timedout = true;
+      const { participants, turn } = match;
+      const opponent = participants.find(p => p.side !== turn);
+      opponent.winner = true;
+      this.pubSub.publish('matchMoveMade', { matchMoveMade: match });
+      await this.participantRepository.save(opponent);
+    });
+
+    await this.matchRepository.save(matches);
+    return true;
   }
 }
