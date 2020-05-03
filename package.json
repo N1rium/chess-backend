@@ -8,8 +8,9 @@
   "scripts": {
     "prebuild": "rimraf dist",
     "build": "nest build",
+    "postbuild": "tsc -p tsconfig.build.json",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
-    "start": "nest start",
+    "start": "node ./dist/main.js",
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",
@@ -18,7 +19,10 @@
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "jest --config ./test/jest-e2e.json"
+    "test:e2e": "jest --config ./test/jest-e2e.json",
+    "gcp-build": "npm run build",
+    "main": "dist/main.js",
+    "deploy": "gcloud app deploy"
   },
   "dependencies": {
     "@nestjs/common": "^7.0.0",
@@ -59,7 +63,9 @@
     "ts-loader": "^6.2.1",
     "ts-node": "^8.6.2",
     "tsconfig-paths": "^3.9.0",
-    "typescript": "^3.7.4"
+    "typescript": "^3.7.4",
+    "@google-cloud/nodejs-repo-tools": "^3.0.0",
+    "tslint": "^5.11.0"
   },
   "jest": {
     "moduleFileExtensions": [
