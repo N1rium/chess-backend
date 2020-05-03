@@ -89,8 +89,11 @@ export class Match {
   )
   participants: MatchParticipant[];
 
-  @Field(() => MatchParticipant)
+  @Field(() => MatchParticipant, { nullable: true })
   self: MatchParticipant;
+
+  @Field(() => MatchParticipant, { nullable: true })
+  opponent: MatchParticipant;
 
   @CreateDateColumn({ type: 'timestamp' })
   createdDate: Date;

@@ -52,7 +52,8 @@ type Match {
   threefold: Boolean!
   timedout: Boolean!
   participants: [MatchParticipant!]
-  self: MatchParticipant!
+  self: MatchParticipant
+  opponent: MatchParticipant
 }
 
 type MatchInvite {

@@ -42,7 +42,8 @@ export class MatchService {
   addSelfToMatch(id: string, match: Match): Match {
     const result = { ...match };
     const { participants = [] } = result;
-    result.self = participants.find(p => p.user.id === id) || null;
+    result.self = participants.find(p => p.user.id == id) || null;
+    result.opponent = participants.find(p => p.user.id != id) || null;
     return result;
   }
 
@@ -57,14 +58,9 @@ export class MatchService {
   }
 
   async userOngoingMatches(id: string, self?: boolean): Promise<Match[]> {
-    let matches = await this.matchRepository
-      .createQueryBuilder('match')
-      .leftJoinAndSelect('match.participants', 'participants')
-      .leftJoinAndSelect('participants.user', 'user')
-      .where('user.id=:id')
-      .andWhere('match.gameOver=false')
-      .setParameter('id', id)
-      .getMany();
+    let matches = await this.matchRepository.find({
+      where: { 'participants.userId': id, gameOver: false },
+    });
     if (self === true) {
       matches = this.addSelfToMatches(id, matches);
     }
@@ -72,14 +68,11 @@ export class MatchService {
   }
 
   async userFinishedMatches(id: string, self?: boolean): Promise<Match[]> {
-    let matches = await this.matchRepository
-      .createQueryBuilder('match')
-      .leftJoinAndSelect('match.participants', 'participants')
-      .leftJoinAndSelect('participants.user', 'user')
-      .where('user.id=:id')
-      .andWhere('match.gameOver=true')
-      .setParameter('id', id)
-      .getMany();
+    let matches = await this.matchRepository.find({
+      where: { 'participants.userId': id, gameOver: true },
+      take: 10,
+    });
+
     if (self === true) {
       matches = this.addSelfToMatches(id, matches);
     }
