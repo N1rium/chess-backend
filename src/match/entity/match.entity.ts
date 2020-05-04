@@ -95,9 +95,11 @@ export class Match {
   @Field(() => MatchParticipant, { nullable: true })
   opponent: MatchParticipant;
 
+  @Field(() => String)
   @CreateDateColumn({ type: 'timestamp' })
   createdDate: Date;
 
+  @Field(() => String)
   @UpdateDateColumn({ type: 'timestamp' })
   updatedDate: Date;
 }
