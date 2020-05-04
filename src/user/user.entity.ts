@@ -31,8 +31,11 @@ export class User {
   @Column('varchar', { length: 50, unique: true })
   email: string;
 
-  @Column('varchar', { length: 50 })
+  @Column('varchar')
   password: string;
+
+  @Column('varchar', { length: 50, nullable: true })
+  salt: string;
 
   @CreateDateColumn({ type: 'timestamp' })
   createdDate: Date;
