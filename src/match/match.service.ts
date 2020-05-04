@@ -84,6 +84,12 @@ export class MatchService {
     chess.header('Annotator', 'Chessports');
 
     const { side = 'w', opponent, timeControl, increment, rated } = input;
+
+    if (rated == true && (!creator || !opponent))
+      throw new BadRequestException({
+        message: 'Cant create a rated match with insufficient participants',
+      });
+
     const type = MatchType[getRatingFromTimeControl(timeControl, increment)];
 
     if (creator == opponent)
