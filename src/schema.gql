@@ -54,6 +54,8 @@ type Match {
   participants: [MatchParticipant!]
   self: MatchParticipant
   opponent: MatchParticipant
+  createdDate: String!
+  updatedDate: String!
 }
 
 type MatchInvite {
