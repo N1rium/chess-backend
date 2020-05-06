@@ -14,7 +14,6 @@ import { User } from './user/user.entity';
 import { Friend } from './friend/friend.entity';
 import { MatchmakingModule } from './matchmaking/matchmaking.module';
 
-import { PubSub } from 'graphql-subscriptions';
 import { MatchParticipant } from './match/entity/match-participant';
 import { Match } from './match/entity/match.entity';
 
