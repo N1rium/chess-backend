@@ -318,10 +318,20 @@ export class MatchService {
   async cleanup(): Promise<boolean> {
     const matches = await this.matchRepository
       .createQueryBuilder('match')
-      .distinctOn(['match.id'])
-      .leftJoinAndSelect('match.participants', 'participant')
-      .where('match.gameOver=false')
-      .andWhere(`participant.pendingTimeoutDate < ${Date.now()}`)
+      .innerJoin(
+        query => {
+          return query
+            .from(MatchParticipant, 'p')
+            .select('p."matchId"')
+            .where('p."pendingTimeoutDate" < :now');
+        },
+        'selfMatch',
+        '"selfMatch"."matchId" = match.id',
+      )
+      .leftJoinAndSelect('match.participants', 'participants')
+      .leftJoinAndSelect('participants.user', 'user')
+      .setParameter('now', Date.now())
+      .where('match.gameOver = false')
       .getMany();
 
     matches.forEach(async match => {
