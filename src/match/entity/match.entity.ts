@@ -52,28 +52,32 @@ export class Match {
   rated: boolean;
 
   @Field(() => Boolean)
-  @Column({ type: 'bool' })
+  @Column({ type: 'bool', default: 'false' })
   gameOver: boolean;
 
   @Field(() => Boolean)
-  @Column({ type: 'bool' })
+  @Column({ type: 'bool', default: 'false' })
   draw: boolean;
 
   @Field(() => Boolean)
-  @Column({ type: 'bool' })
+  @Column({ type: 'bool', default: 'false' })
   checkmate: boolean;
 
   @Field(() => Boolean)
-  @Column({ type: 'bool' })
+  @Column({ type: 'bool', default: 'false' })
   stalemate: boolean;
 
   @Field(() => Boolean)
-  @Column({ type: 'bool' })
+  @Column({ type: 'bool', default: 'false' })
   threefold: boolean;
 
   @Field(() => Boolean)
   @Column({ type: 'bool', default: 'false' })
   timedout: boolean;
+
+  @Field(() => Boolean)
+  @Column({ type: 'bool', default: 'false' })
+  forfeit: boolean;
 
   @Column({ type: 'integer' })
   timeControl: number;
