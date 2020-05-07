@@ -48,19 +48,45 @@ export class MatchService {
   }
 
   async myMatches(id: string): Promise<Match[]> {
-    return this.matchRepository
+    let matches = await this.matchRepository
       .createQueryBuilder('match')
+      .innerJoin(
+        query => {
+          return query
+            .from(MatchParticipant, 'p')
+            .select('p."matchId"')
+            .where('p."userId" = :id');
+        },
+        'selfMatch',
+        '"selfMatch"."matchId" = match.id',
+      )
       .leftJoinAndSelect('match.participants', 'participants')
       .leftJoinAndSelect('participants.user', 'user')
-      .where('user.id=:id')
       .setParameter('id', id)
       .getMany();
+
+    matches = this.addSelfToMatches(id, matches);
+    return matches;
   }
 
   async userOngoingMatches(id: string, self?: boolean): Promise<Match[]> {
-    let matches = await this.matchRepository.find({
-      where: { 'participants.userId': id, gameOver: false },
-    });
+    let matches = await this.matchRepository
+      .createQueryBuilder('match')
+      .innerJoin(
+        query => {
+          return query
+            .from(MatchParticipant, 'p')
+            .select('p."matchId"')
+            .where('p."userId" = :id');
+        },
+        'selfMatch',
+        '"selfMatch"."matchId" = match.id',
+      )
+      .leftJoinAndSelect('match.participants', 'participants')
+      .leftJoinAndSelect('participants.user', 'user')
+      .setParameter('id', id)
+      .where('match.gameOver = false')
+      .getMany();
     if (self === true) {
       matches = this.addSelfToMatches(id, matches);
     }
@@ -68,10 +94,23 @@ export class MatchService {
   }
 
   async userFinishedMatches(id: string, self?: boolean): Promise<Match[]> {
-    let matches = await this.matchRepository.find({
-      where: { 'participants.userId': id, gameOver: true },
-      take: 10,
-    });
+    let matches = await this.matchRepository
+      .createQueryBuilder('match')
+      .innerJoin(
+        query => {
+          return query
+            .from(MatchParticipant, 'p')
+            .select('p."matchId"')
+            .where('p."userId" = :id');
+        },
+        'selfMatch',
+        '"selfMatch"."matchId" = match.id',
+      )
+      .leftJoinAndSelect('match.participants', 'participants')
+      .leftJoinAndSelect('participants.user', 'user')
+      .setParameter('id', id)
+      .where('match.gameOver = true')
+      .getMany();
 
     if (self === true) {
       matches = this.addSelfToMatches(id, matches);
