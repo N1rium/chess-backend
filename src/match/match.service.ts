@@ -257,66 +257,63 @@ export class MatchService {
     if (newMatch.gameOver && rated) {
       const whitePlayer = self.side === 'w' ? self : opponent;
       const blackPlayer = self.side === 'b' ? self : opponent;
-      const users = await this.userRepository
-        .createQueryBuilder('user')
-        .where('user.id=:id', { id: whitePlayer.user.id })
-        .orWhere('user.id=:otherId', { otherId: blackPlayer.user.id })
-        .getMany();
 
-      const whiteUser = users.find(u => u.id === whitePlayer.user.id);
-      const blackUser = users.find(u => u.id === blackPlayer.user.id);
-
-      const whiteResult =
-        !whitePlayer.winner && !blackPlayer.winner
-          ? 0.5
-          : whitePlayer.winner
-          ? 1
-          : 0;
-      const blackResult =
-        !whitePlayer.winner && !blackPlayer.winner
-          ? 0.5
-          : blackPlayer.winner
-          ? 1
-          : 0;
-
-      const getElo = (type: MatchType): string => {
-        const types = {
-          BLITZ: 'blitzElo',
-          RAPID: 'rapidElo',
-          BULLET: 'bulletElo',
-          CLASSICAL: 'classicalElo',
-        };
-        return types[type];
-      };
-
-      const eloType = getElo(type);
-
-      const whiteEloChange = eloChange(
-        whiteUser[eloType],
-        blackUser[eloType],
-        whiteResult,
-      );
-      const blackEloChange = eloChange(
-        blackUser[eloType],
-        whiteUser[eloType],
-        blackResult,
-      );
-
-      whitePlayer.eloChange = whiteEloChange - whiteUser[eloType];
-      whiteUser[eloType] = whiteEloChange;
-      blackPlayer.eloChange = blackEloChange - blackUser[eloType];
-      blackUser[eloType] = blackEloChange;
-
-      await this.userRepository.save([whiteUser, blackUser]);
+      await this.distributeElo(whitePlayer, blackPlayer, type);
     }
 
     await this.participantRepository.save([self, opponent]);
     return newMatch;
   }
 
-  // @Cron('45 * * * * *')
-  async cleanup(): Promise<boolean> {
-    const matches = await this.matchRepository
+  async distributeElo(
+    white: MatchParticipant,
+    black: MatchParticipant,
+    type: MatchType,
+  ): Promise<User[]> {
+    const users = await this.userRepository
+      .createQueryBuilder('user')
+      .where('user.id=:id', { id: white.user.id })
+      .orWhere('user.id=:otherId', { otherId: black.user.id })
+      .getMany();
+
+    const types = {
+      BLITZ: 'blitzElo',
+      RAPID: 'rapidElo',
+      BULLET: 'bulletElo',
+      CLASSICAL: 'classicalElo',
+    };
+
+    const eloType = types[type];
+
+    const whiteUser = users.find(u => u.id === white.user.id);
+    const blackUser = users.find(u => u.id === black.user.id);
+
+    const whiteResult =
+      !white.winner && !black.winner ? 0.5 : white.winner ? 1 : 0;
+    const blackResult =
+      !white.winner && !black.winner ? 0.5 : black.winner ? 1 : 0;
+
+    const whiteEloChange = eloChange(
+      whiteUser[eloType],
+      blackUser[eloType],
+      whiteResult,
+    );
+    const blackEloChange = eloChange(
+      blackUser[eloType],
+      whiteUser[eloType],
+      blackResult,
+    );
+
+    white.eloChange = whiteEloChange - whiteUser[eloType];
+    whiteUser[eloType] = whiteEloChange;
+    black.eloChange = blackEloChange - blackUser[eloType];
+    blackUser[eloType] = blackEloChange;
+
+    return await this.userRepository.save([whiteUser, blackUser]);
+  }
+
+  async playerTimedoutMatches(): Promise<Match[]> {
+    return this.matchRepository
       .createQueryBuilder('match')
       .innerJoin(
         query => {
@@ -333,7 +330,11 @@ export class MatchService {
       .setParameter('now', Date.now())
       .where('match.gameOver = false')
       .getMany();
+  }
 
+  // @Cron('45 * * * * *')
+  async cleanup(): Promise<boolean> {
+    const matches = await this.playerTimedoutMatches();
     matches.forEach(async match => {
       match.gameOver = true;
       match.timedout = true;
@@ -341,6 +342,13 @@ export class MatchService {
       const opponent = participants.find(p => p.side !== turn);
       opponent.winner = true;
       this.pubSub.publish('matchMoveMade', { matchMoveMade: match });
+
+      if (match.rated) {
+        const whitePlayer = participants.find(p => p.side === 'w');
+        const blackPlayer = participants.find(p => p.side === 'b');
+        await this.distributeElo(whitePlayer, blackPlayer, match.type);
+      }
+
       await this.participantRepository.save(opponent);
     });
 
