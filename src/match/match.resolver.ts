@@ -25,12 +25,6 @@ export class MatchResolver {
   }
 
   @UseGuards(AuthGuard)
-  @Query(() => [Match], { name: 'availableMatches' })
-  availableMatches(): Promise<Match[]> {
-    return this.matchService.availableMatches();
-  }
-
-  @UseGuards(AuthGuard)
   @Query(() => [Match], { name: 'myMatches' })
   myMatches(@CurrentUser() user): Promise<Match[]> {
     return this.matchService.myMatches(user.id);

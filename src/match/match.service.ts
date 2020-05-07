@@ -26,15 +26,6 @@ export class MatchService {
     return this.matchRepository.findOne(id);
   }
 
-  async availableMatches(): Promise<Match[]> {
-    return this.matchRepository.find({
-      order: {
-        createdDate: 'DESC',
-      },
-      take: 50,
-    });
-  }
-
   addSelfToMatches(id: string, matches: Match[]): Match[] {
     return matches.map(m => this.addSelfToMatch(id, m));
   }
