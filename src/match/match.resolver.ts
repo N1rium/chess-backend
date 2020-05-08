@@ -60,6 +60,15 @@ export class MatchResolver {
     return this.matchService.joinMatch(id, user.id);
   }
 
+  @UseGuards(AuthGuard)
+  @Mutation(() => Match, { name: 'forfeit' })
+  forfeit(
+    @Args('matchId', { type: () => String }) matchId: string,
+    @CurrentUser() user,
+  ): Promise<Match> {
+    return this.matchService.forfeit(matchId, user.id);
+  }
+
   @Mutation(() => Match, { name: 'matchMove' })
   @UseGuards(AuthGuard)
   async matchMove(
@@ -67,7 +76,6 @@ export class MatchResolver {
     @Args('input', { type: () => MatchMoveInput }) input: MatchMoveInput,
   ): Promise<Match> {
     const matchMoveMade = await this.matchService.matchMove(user.id, input);
-    // pubSub.publish('matchMoveMade', { matchMoveMade });
     return matchMoveMade;
   }
 

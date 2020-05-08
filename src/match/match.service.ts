@@ -77,6 +77,7 @@ export class MatchService {
       .leftJoinAndSelect('participants.user', 'user')
       .setParameter('id', id)
       .where('match.gameOver = false')
+      .orderBy('match.updatedDate', 'DESC')
       .getMany();
     if (self === true) {
       matches = this.addSelfToMatches(id, matches);
@@ -101,6 +102,7 @@ export class MatchService {
       .leftJoinAndSelect('participants.user', 'user')
       .setParameter('id', id)
       .where('match.gameOver = true')
+      .orderBy('match.updatedDate', 'DESC')
       .getMany();
 
     if (self === true) {
@@ -114,8 +116,10 @@ export class MatchService {
     chess.header('Annotator', 'Chessports');
 
     const { side = 'w', opponent, timeControl, increment, rated } = input;
+    const hasCreator = creator != undefined && creator != null;
+    const hasOpponent = opponent != undefined && opponent != null;
 
-    if (rated == true && (!creator || !opponent))
+    if (rated == true && (!hasCreator || !hasOpponent))
       throw new BadRequestException({
         message: 'Cant create a rated match with insufficient participants',
       });
@@ -248,11 +252,8 @@ export class MatchService {
     if (newMatch.gameOver && rated) {
       const whitePlayer = self.side === 'w' ? self : opponent;
       const blackPlayer = self.side === 'b' ? self : opponent;
-
       await this.distributeElo(whitePlayer, blackPlayer, type);
     }
-
-    await this.participantRepository.save([self, opponent]);
     return newMatch;
   }
 
@@ -279,10 +280,8 @@ export class MatchService {
     const whiteUser = users.find(u => u.id === white.user.id);
     const blackUser = users.find(u => u.id === black.user.id);
 
-    const whiteResult =
-      !white.winner && !black.winner ? 0.5 : white.winner ? 1 : 0;
-    const blackResult =
-      !white.winner && !black.winner ? 0.5 : black.winner ? 1 : 0;
+    const whiteResult = white.winner ? 1 : black.winner ? 0 : 0.5;
+    const blackResult = black.winner ? 1 : white.winner ? 0 : 0.5;
 
     const whiteEloChange = eloChange(
       whiteUser[eloType],
@@ -300,6 +299,7 @@ export class MatchService {
     black.eloChange = blackEloChange - blackUser[eloType];
     blackUser[eloType] = blackEloChange;
 
+    await this.participantRepository.save([white, black]);
     return await this.userRepository.save([whiteUser, blackUser]);
   }
 
@@ -323,6 +323,30 @@ export class MatchService {
       .getMany();
   }
 
+  async forfeit(matchId: string, userId: string): Promise<Match> {
+    const match = await this.matchById(matchId);
+    const { participants = [], type, rated } = match;
+
+    const self = participants.find(p => p.user.id === userId);
+    const opponent = participants.find(p => p.user.id !== userId);
+
+    match.forfeit = true;
+    match.gameOver = true;
+    opponent.winner = true;
+
+    await this.participantRepository.save(opponent);
+    this.pubSub.publish('matchMoveMade', { matchMoveMade: match });
+
+    if (rated) {
+      const whitePlayer = self.side === 'w' ? self : opponent;
+      const blackPlayer = self.side === 'b' ? self : opponent;
+      await this.distributeElo(whitePlayer, blackPlayer, type);
+    }
+
+    await this.matchRepository.save(match);
+    return match;
+  }
+
   // @Cron('45 * * * * *')
   async cleanup(): Promise<boolean> {
     const matches = await this.playerTimedoutMatches();
@@ -339,8 +363,6 @@ export class MatchService {
         const blackPlayer = participants.find(p => p.side === 'b');
         await this.distributeElo(whitePlayer, blackPlayer, match.type);
       }
-
-      await this.participantRepository.save(opponent);
     });
 
     await this.matchRepository.save(matches);

@@ -104,6 +104,7 @@ type Mutation {
   createUser(input: CreateUserInput!): LoginResponse!
   createMatch(input: CreateMatchInput!): Match!
   joinMatch(id: String!): Match!
+  forfeit(matchId: String!): Match!
   matchMove(input: MatchMoveInput!): Match!
   createMatchInvite: MatchInvite!
   deleteMyInvite: MatchInvite!
