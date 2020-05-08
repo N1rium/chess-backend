@@ -216,8 +216,13 @@ export class MatchService {
     let pendingGameOver = false;
     if (pendingTimeoutDate < Date.now()) {
       pendingGameOver = true;
-      if (self.side === chess.turn()) opponent.winner = true;
-      else self.winner = true;
+      if (self.side === chess.turn()) {
+        opponent.time = 0;
+        opponent.winner = true;
+      } else {
+        self.time = 0;
+        self.winner = true;
+      }
     }
 
     if (!pendingGameOver) {
@@ -254,6 +259,8 @@ export class MatchService {
       const blackPlayer = self.side === 'b' ? self : opponent;
       await this.distributeElo(whitePlayer, blackPlayer, type);
     }
+
+    await this.participantRepository.save([self, opponent]);
     return newMatch;
   }
 
@@ -334,7 +341,10 @@ export class MatchService {
     match.gameOver = true;
     opponent.winner = true;
 
-    await this.participantRepository.save(opponent);
+    self.pendingTimeoutDate = self.pendingTimeoutDate - Date.now();
+    opponent.pendingTimeoutDate = opponent.pendingTimeoutDate - Date.now();
+
+    await this.participantRepository.save([self, opponent]);
     this.pubSub.publish('matchMoveMade', { matchMoveMade: match });
 
     if (rated) {
@@ -363,6 +373,8 @@ export class MatchService {
         const blackPlayer = participants.find(p => p.side === 'b');
         await this.distributeElo(whitePlayer, blackPlayer, match.type);
       }
+
+      await this.participantRepository.save(opponent);
     });
 
     await this.matchRepository.save(matches);

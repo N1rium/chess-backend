@@ -52,6 +52,8 @@ type Match {
   threefold: Boolean!
   timedout: Boolean!
   forfeit: Boolean!
+  timeControl: Float!
+  increment: Float!
   participants: [MatchParticipant!]
   self: MatchParticipant
   opponent: MatchParticipant
