@@ -79,9 +79,11 @@ export class Match {
   @Column({ type: 'bool', default: 'false' })
   forfeit: boolean;
 
+  @Field(() => Number)
   @Column({ type: 'integer' })
   timeControl: number;
 
+  @Field(() => Number)
   @Column({ type: 'integer' })
   increment: number;
 
