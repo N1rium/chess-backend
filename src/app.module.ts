@@ -16,6 +16,7 @@ import { MatchmakingModule } from './matchmaking/matchmaking.module';
 
 import { MatchParticipant } from './match/entity/match-participant';
 import { Match } from './match/entity/match.entity';
+import { NotificationModule } from './notification/notification.module';
 
 @Module({
   imports: [
@@ -40,6 +41,7 @@ import { Match } from './match/entity/match.entity';
     }),
     FriendModule,
     MatchmakingModule,
+    NotificationModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -215,6 +215,7 @@ export class MatchService {
     const { pendingTimeoutDate } = self;
     let pendingGameOver = false;
     if (pendingTimeoutDate < Date.now()) {
+      storedMatch.timedout = true;
       pendingGameOver = true;
       if (self.side === chess.turn()) {
         opponent.time = 0;
@@ -357,7 +358,7 @@ export class MatchService {
     return match;
   }
 
-  // @Cron('45 * * * * *')
+  @Cron('45 * * * * *')
   async cleanup(): Promise<boolean> {
     const matches = await this.playerTimedoutMatches();
     matches.forEach(async match => {
@@ -376,6 +377,8 @@ export class MatchService {
 
       await this.participantRepository.save(opponent);
     });
+
+    console.log(`${matches.length} matches cleaned`);
 
     await this.matchRepository.save(matches);
     return true;

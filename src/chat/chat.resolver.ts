@@ -30,6 +30,7 @@ export class ChatResolver {
     filter: (payload, variables) => payload.chatMessage.room === variables.room,
   })
   chatMessage(@Args('room') room: string) {
+    console.log('sub');
     return this.pubSub.asyncIterator('chatMessage');
   }
 }

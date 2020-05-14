@@ -43,6 +43,14 @@ export class MatchResolver {
   }
 
   @UseGuards(AuthGuard)
+  @Query(() => [Match], { name: 'finishedMatches' })
+  finishedMatches(
+    @Args('id', { type: () => String }) userId,
+  ): Promise<Match[]> {
+    return this.matchService.userFinishedMatches(userId, false);
+  }
+
+  @UseGuards(AuthGuard)
   @Mutation(() => Match, { name: 'createMatch' })
   createMatch(
     @CurrentUser() user,

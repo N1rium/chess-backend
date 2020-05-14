@@ -27,6 +27,17 @@ input CreateUserInput {
   passwordRepeat: String!
 }
 
+type Friend {
+  user: User!
+  friend: User!
+  status: Relationship!
+}
+
+"""
+The `JSON` scalar type represents JSON values as specified by [ECMA-404](http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf).
+"""
+scalar JSON
+
 input LoginInput {
   email: String!
   password: String!
@@ -111,8 +122,21 @@ type Mutation {
   createMatchInvite: MatchInvite!
   deleteMyInvite: MatchInvite!
   sendChatMessage(input: ChatMessageInput!): ChatMessage!
+  friendRequest(recipient: String!): Friend!
   addToMatchmaking: String!
   removeFromMatchmaking: String!
+}
+
+type Notification {
+  id: ID!
+  read: Boolean!
+  type: NotificationType!
+  data: JSON
+}
+
+enum NotificationType {
+  OTHER
+  MATCH_ENDED
 }
 
 type Query {
@@ -124,8 +148,17 @@ type Query {
   myMatches: [Match!]!
   myOngoingMatches: [Match!]!
   myFinishedMatches: [Match!]!
+  finishedMatches(id: String!): [Match!]!
   matchInviteFromId(id: String!): MatchInvite!
   matchInvites: [MatchInvite!]!
+  myFriends: [Friend!]!
+  myNotifications: [Notification!]!
+}
+
+enum Relationship {
+  PENDING
+  MUTUAL
+  BLOCKED
 }
 
 type Subscription {
@@ -133,11 +166,13 @@ type Subscription {
   matchInvite: MatchInviteSubData!
   chatMessage(room: String!): ChatMessage!
   matchmake(userId: String!): MatchmakingResponse!
+  notification(userId: String!): Notification!
 }
 
 type User {
   id: ID!
   username: String!
+  exp: Float!
   classicalElo: Float!
   rapidElo: Float!
   blitzElo: Float!

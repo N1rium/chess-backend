@@ -4,11 +4,10 @@ import {
   PrimaryGeneratedColumn,
   CreateDateColumn,
   UpdateDateColumn,
-  ManyToMany,
-  JoinTable,
+  OneToMany,
 } from 'typeorm';
 import { ObjectType, Field, ID, InputType } from '@nestjs/graphql';
-import { Friend } from 'src/friend/friend.entity';
+import { Notification } from 'src/notification/notification.entity';
 
 export enum UserRole {
   ADMIN = 'admin',
@@ -34,6 +33,10 @@ export class User {
   @Column('varchar')
   password: string;
 
+  @Field(() => Number)
+  @Column({ type: 'bigint', default: 0 })
+  exp: number;
+
   @Column('varchar', { length: 50, nullable: true })
   salt: string;
 
@@ -42,10 +45,6 @@ export class User {
 
   @UpdateDateColumn({ type: 'timestamp' })
   updatedDate: Date;
-
-  @ManyToMany(type => Friend)
-  @JoinTable()
-  friends: Friend[];
 
   @Field(() => Number)
   @Column({ type: 'integer', default: 1500 })
@@ -62,6 +61,12 @@ export class User {
   @Field(() => Number)
   @Column({ type: 'integer', default: 1500 })
   bulletElo: number;
+
+  @OneToMany(
+    type => Notification,
+    noitification => noitification.user,
+  )
+  notifications: Notification[];
 
   // @Column({
   //   type: 'enum',
