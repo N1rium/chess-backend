@@ -62,6 +62,14 @@ export class User {
   @Column({ type: 'integer', default: 1500 })
   bulletElo: number;
 
+  @Field(() => String, { nullable: true })
+  @Column({ type: 'varchar', default: null })
+  glootId: string;
+
+  @Field(() => String, { nullable: true })
+  @Column({ type: 'varchar', default: null })
+  glootToken: string;
+
   @OneToMany(
     type => Notification,
     noitification => noitification.user,
