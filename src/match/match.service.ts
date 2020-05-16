@@ -9,10 +9,13 @@ import { eloChange, getRatingFromTimeControl } from '../util/chess-helper';
 import { User } from 'src/user/user.entity';
 import { Match, MatchType } from './entity/match.entity';
 import { MatchParticipant } from './entity/match-participant';
+import { NotificationService } from 'src/notification/notification.service';
+import { NotificationType } from 'src/notification/notification.entity';
 
 @Injectable()
 export class MatchService {
   constructor(
+    private notificationService: NotificationService,
     @InjectRepository(Match)
     private matchRepository: Repository<Match>,
     @InjectRepository(MatchParticipant)
@@ -258,6 +261,14 @@ export class MatchService {
     if (newMatch.gameOver && rated) {
       const whitePlayer = self.side === 'w' ? self : opponent;
       const blackPlayer = self.side === 'b' ? self : opponent;
+
+      /* Create notifications */
+      this.notificationService.createMany(
+        [whitePlayer.user.id, blackPlayer.user.id],
+        false,
+        newMatch,
+        NotificationType.MATCH_ENDED,
+      );
       await this.distributeElo(whitePlayer, blackPlayer, type);
     }
 
@@ -351,6 +362,13 @@ export class MatchService {
     if (rated) {
       const whitePlayer = self.side === 'w' ? self : opponent;
       const blackPlayer = self.side === 'b' ? self : opponent;
+      /* Create notifications */
+      this.notificationService.createMany(
+        [whitePlayer.user.id, blackPlayer.user.id],
+        false,
+        match,
+        NotificationType.MATCH_ENDED,
+      );
       await this.distributeElo(whitePlayer, blackPlayer, type);
     }
 
@@ -372,6 +390,13 @@ export class MatchService {
       if (match.rated) {
         const whitePlayer = participants.find(p => p.side === 'w');
         const blackPlayer = participants.find(p => p.side === 'b');
+        /* Create notifications */
+        this.notificationService.createMany(
+          [whitePlayer.user.id, blackPlayer.user.id],
+          false,
+          match,
+          NotificationType.MATCH_ENDED,
+        );
         await this.distributeElo(whitePlayer, blackPlayer, match.type);
       }
 

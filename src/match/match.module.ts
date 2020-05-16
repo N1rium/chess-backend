@@ -6,9 +6,13 @@ import { PubSub } from 'graphql-subscriptions';
 import { User } from 'src/user/user.entity';
 import { Match } from './entity/match.entity';
 import { MatchParticipant } from './entity/match-participant';
+import { NotificationModule } from 'src/notification/notification.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Match, MatchParticipant, User])],
+  imports: [
+    NotificationModule,
+    TypeOrmModule.forFeature([Match, MatchParticipant, User]),
+  ],
   providers: [
     MatchResolver,
     MatchService,

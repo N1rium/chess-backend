@@ -1,4 +1,4 @@
-import { Injectable, Inject } from '@nestjs/common';
+import { Injectable, Inject, HttpService } from '@nestjs/common';
 import {
   MatchmakingParticipant,
   MatchmakingSearchMode,
@@ -30,6 +30,7 @@ export class MatchmakingService {
         increment: 0,
         rated: true,
       });
+
       this.removeUsersFromQueue([userId, player.id]);
       this.pubSub.publish('matchmake', {
         matchmake: {
