@@ -57,6 +57,26 @@ export class NotificationService {
     return this.notificationRepository.save(notification);
   }
 
+  async createMany(
+    userIds: string[],
+    read: boolean,
+    data = {},
+    type = NotificationType.OTHER,
+  ): Promise<Notification[]> {
+    const notifications = [];
+    userIds.forEach(id => {
+      const notification = new Notification();
+      notification.user = new User();
+      notification.user.id = id;
+      notification.read = read;
+      notification.data = data;
+      notification.type = type;
+      notifications.push(notification);
+    });
+
+    return this.notificationRepository.save(notifications);
+  }
+
   /* ================================= UPDATE ================================= */
 
   async read(userId: string, notificationId: string): Promise<Notification> {

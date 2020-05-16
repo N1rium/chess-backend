@@ -149,10 +149,10 @@ type Query {
   myOngoingMatches: [Match!]!
   myFinishedMatches: [Match!]!
   finishedMatches(id: String!): [Match!]!
+  myNotifications: [Notification!]!
   matchInviteFromId(id: String!): MatchInvite!
   matchInvites: [MatchInvite!]!
   myFriends: [Friend!]!
-  myNotifications: [Notification!]!
 }
 
 enum Relationship {
@@ -163,10 +163,10 @@ enum Relationship {
 
 type Subscription {
   matchMoveMade(id: String!): Match!
+  notification(userId: String!): Notification!
   matchInvite: MatchInviteSubData!
   chatMessage(room: String!): ChatMessage!
   matchmake(userId: String!): MatchmakingResponse!
-  notification(userId: String!): Notification!
 }
 
 type User {
